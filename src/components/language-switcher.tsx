@@ -33,19 +33,22 @@ export function LanguageSwitcher() {
   return (
     <label
       htmlFor={id}
-      className="relative inline-flex h-11 items-center rounded-full text-muted transition-colors hover:bg-page hover:text-ink"
-      title={t("language")}
+      className="relative inline-flex h-11 shrink-0 items-center gap-1.5 rounded-full px-3 text-muted transition-colors hover:bg-page hover:text-ink focus-within:ring-2 focus-within:ring-link"
+      title={`${t("language")}: ${LOCALE_NAMES[locale as AppLocale]}`}
     >
       <span className="sr-only">{t("language")}</span>
-      <span className="pointer-events-none absolute start-3 top-1/2 -translate-y-1/2" aria-hidden="true">
+      <span className="pointer-events-none" aria-hidden="true">
         <GlobeIcon />
+      </span>
+      <span className="pointer-events-none font-mono text-[12.5px] font-medium uppercase tracking-wide text-text" aria-hidden="true">
+        {locale}
       </span>
       <select
         id={id}
         value={locale}
         onChange={onChange}
         disabled={pending}
-        className="h-11 max-w-[150px] cursor-pointer appearance-none truncate rounded-full bg-transparent pe-3 ps-9 text-[14px] font-medium text-text focus:outline-none focus-visible:ring-2 focus-visible:ring-link"
+        className="absolute inset-0 h-full w-full cursor-pointer appearance-none opacity-0 focus:outline-none"
       >
         {LOCALES.map((l) => (
           <option key={l} value={l} lang={l}>

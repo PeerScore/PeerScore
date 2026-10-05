@@ -44,7 +44,7 @@ export async function Header() {
       <div className="site-container flex flex-wrap items-center gap-x-6 gap-y-3 py-3">
         <Logo />
 
-        <SearchForm className="order-last w-full basis-full md:order-none md:w-auto md:basis-auto md:flex-1 md:min-w-[260px] md:max-w-[520px]">
+        <SearchForm className="order-last w-full basis-full min-w-0 xl:order-none xl:w-auto xl:basis-auto xl:flex-1 xl:max-w-[520px]">
           <label className="relative block">
             <span className="sr-only">{t("search")}</span>
             <span className="pointer-events-none absolute start-4 top-1/2 -translate-y-1/2 text-muted">
@@ -64,12 +64,12 @@ export async function Header() {
         </SearchForm>
         <SearchShortcut targetId="site-search" />
 
-        <nav className="ms-auto flex flex-wrap items-center gap-1" aria-label={t("primaryNav")}>
+        <nav className="ms-auto flex shrink-0 items-center gap-1" aria-label={t("primaryNav")}>
           {nav.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="inline-flex h-11 items-center rounded-full px-3 text-[14px] font-medium text-text hover:bg-page hover:text-ink"
+              className="hidden h-11 items-center whitespace-nowrap rounded-full px-3 text-[14px] font-medium text-text hover:bg-page hover:text-ink sm:inline-flex"
             >
               {item.label}
             </Link>
@@ -78,7 +78,7 @@ export async function Header() {
           <ThemeToggle />
           <Link
             href="/submit"
-            className="ms-1 inline-flex h-11 items-center rounded-full bg-cta px-4 text-[14px] font-medium text-cta-text hover:opacity-90"
+            className="ms-1 inline-flex h-11 items-center whitespace-nowrap rounded-full bg-cta px-4 text-[14px] font-medium text-cta-text hover:opacity-90"
           >
             {c("submitResearcher")}
           </Link>
