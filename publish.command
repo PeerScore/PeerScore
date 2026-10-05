@@ -9,6 +9,6 @@ git remote set-url origin git@github.com:PeerScore/PeerScore.git
 git status --short | head -20
 echo
 echo "-> git push -u origin main"
-git push -u origin main
+git push -u origin main --force-with-lease
 echo
 read -r -p "Entrée pour fermer..."
