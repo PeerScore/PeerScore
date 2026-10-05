@@ -55,7 +55,7 @@
     "statFields": "Áreas",
     "statQueue": "Na fila",
     "featured": "Análise em destaque",
-    "papersModels": "{papers, plural, one {# artigo} other {# artigos}} · {models, plural, one {# modelo} other {# modelos}}",
+    "papersAnalyzedModels": "{papers, plural, one {# artigo} other {# artigos}} analisados · {models, plural, one {# modelo} other {# modelos}}",
     "readAnalysis": "Ler a análise",
     "noAnalysis": "Ainda não foi publicada nenhuma análise. O primeiro pedido da fila aparecerá aqui.",
     "recentlyPublished": "Publicados recentemente",
@@ -65,10 +65,22 @@
     "allFields": "Todas as áreas",
     "howItWorks": "Como funciona o PeerScore",
     "steps": {
-      "1": { "title": "Submeta um nome", "body": "Qualquer pessoa pode submeter um investigador. Um único campo, sem conta — o pedido entra numa fila pública." },
-      "2": { "title": "As publicações são recolhidas", "body": "Um worker identifica o investigador em registos académicos abertos e descarrega os metadados e resumos das publicações." },
-      "3": { "title": "Análise específica da área", "body": "Vários modelos de linguagem leem as publicações com um prompt escrito para a área e pontuam cinco critérios de forma independente." },
-      "4": { "title": "O artigo fica online", "body": "As pontuações são agregadas num consenso ponderado e o relatório completo, com cada desacordo, é publicado em 24–48 h." }
+      "1": {
+        "title": "Submeta um nome",
+        "body": "Qualquer pessoa pode submeter um investigador. Um único campo, sem conta — o pedido entra numa fila pública."
+      },
+      "2": {
+        "title": "As publicações são recolhidas",
+        "body": "Um worker identifica o investigador em registos académicos abertos e descarrega os metadados e resumos das publicações."
+      },
+      "3": {
+        "title": "Análise específica da área",
+        "body": "Vários modelos de linguagem leem as publicações com um prompt escrito para a área e pontuam cinco critérios de forma independente."
+      },
+      "4": {
+        "title": "O artigo fica online",
+        "body": "As pontuações são agregadas num consenso ponderado e o relatório completo, com cada desacordo, é publicado em 24–48 h."
+      }
     },
     "reproducibleTitle": "Todas as análises são reproduzíveis.",
     "reproducibleBody": "Os prompts têm versão e hash, as saídas dos modelos são guardadas na íntegra e toda a pipeline é de código aberto. As análises são geradas por modelos de linguagem e podem conter erros — reporte um a partir de qualquer página de artigo.",
@@ -108,6 +120,7 @@
     "thPubs": "Publ.",
     "thScore": "Pontuação",
     "thAnalyzed": "Analisado",
+    "analyzedCount": "{n} analisados",
     "analyzing": "em análise",
     "queuedEta": "na fila · 24–48 h",
     "pagination": "Paginação",
@@ -139,7 +152,7 @@
     "from": "Do PeerScore, o índice aberto de investigadores",
     "notice": "Este artigo foi escrito por modelos de linguagem a partir dos metadados e resumos das publicações. Pode conter erros e não é uma revisão por pares. As pontuações refletem a leitura dos modelos, não a opinião de qualquer instituição.",
     "disagreeTitle": "Onde os modelos discordam",
-    "spreadPoints": "Diferença de <n>{spread}</n> pontos entre o modelo mais alto e o mais baixo.",
+    "spreadPoints": "Dispersão de <n>{spread}</n> pontos entre a publicação mais bem e a pior pontuada.",
     "categories": "Categorias",
     "published": "Publicado",
     "inQueue": "Na fila",
@@ -153,13 +166,15 @@
     "infoTopics": "Temas",
     "infoLastRun": "Última execução",
     "ringLabel": "/ 100",
-    "infoStats": "diferença {spread} · mediana da área {median} · {models, plural, one {# modelo} other {# modelos}}",
+    "infoAggregate": "média ponderada por citações de {n, plural, one {# artigo} other {# artigos}} · dispersão {spread} · mediana da área {median}",
+    "infoModels": "{models, plural, one {# modelo} other {# modelos}} por publicação",
     "analyzing": "em análise",
     "queued": "na fila",
     "scoreWithin": "pontuação disponível em 24–48 h",
     "breakdownHint": "Os pesos são definidos por área · modelo mais baixo de cada linha destacado",
+    "breakdownNote": "média de {n, plural, one {# artigo} other {# artigos}}",
     "thCriterion": "Critério",
-    "thConsensus": "Consenso",
+    "thAverage": "Média",
     "criteria": {
       "rigor": "Rigor",
       "reproducibility": "Reprodutibilidade",
@@ -174,9 +189,18 @@
     "thYear": "Ano",
     "thTitle": "Título",
     "thVenue": "Local",
+    "thCitations": "Citações",
     "thCode": "Código",
     "thScore": "Pontuação",
     "publicCode": "Código público",
+    "sortedByCitations": "ordenados por citações",
+    "paperSummary": "Resumo",
+    "paperStrengths": "Pontos fortes",
+    "paperConcerns": "Ressalvas",
+    "paperPerModel": "Por modelo",
+    "paperSpread": "dispersão entre modelos {spread}",
+    "notAnalyzed": "não analisado",
+    "showAnalysis": "Mostrar análise",
     "provPrompt": "Prompt",
     "provSha": "sha {sha}",
     "provModels": "Modelos",
@@ -208,10 +232,26 @@
     "intro": "Um único campo, sem conta. O pedido entra numa fila pública e o artigo é publicado automaticamente quando a análise termina.",
     "whatHappensNext": "O que acontece a seguir",
     "steps": {
-      "1": { "when": "minutos", "title": "Na fila", "body": "O seu pedido é guardado com um identificador público e uma posição na fila. Nada mais é recolhido sobre si." },
-      "2": { "when": "horas", "title": "Publicações recolhidas", "body": "Um worker identifica o nome em registos académicos abertos e descarrega metadados, resumos e ligações para o código." },
-      "3": { "when": "horas", "title": "Análise específica da área", "body": "Vários modelos de linguagem leem as publicações com um prompt escrito para a área e pontuam cinco critérios de forma independente." },
-      "4": { "when": "24–48 h", "title": "Artigo publicado", "body": "As pontuações são agregadas, o relatório e cada desacordo são publicados e a página fica online automaticamente." }
+      "1": {
+        "when": "minutos",
+        "title": "Na fila",
+        "body": "O seu pedido é guardado com um identificador público e uma posição na fila. Nada mais é recolhido sobre si."
+      },
+      "2": {
+        "when": "horas",
+        "title": "Publicações recolhidas",
+        "body": "Um worker identifica o nome em registos académicos abertos e descarrega metadados, resumos e ligações para o código."
+      },
+      "3": {
+        "when": "horas",
+        "title": "Análise específica da área",
+        "body": "Vários modelos de linguagem leem as publicações com um prompt escrito para a área e pontuam cinco critérios de forma independente."
+      },
+      "4": {
+        "when": "24–48 h",
+        "title": "Artigo publicado",
+        "body": "As pontuações são agregadas, o relatório e cada desacordo são publicados e a página fica online automaticamente."
+      }
     },
     "whoCanBeSubmitted": "Quem pode ser submetido",
     "eligible": {

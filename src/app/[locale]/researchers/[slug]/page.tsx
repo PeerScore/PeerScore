@@ -5,11 +5,11 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { getResearcherBySlug, listRuns } from "@/lib/repositories";
 import { CRITERIA } from "@/lib/scoring";
-import type { AnalysisRunSummary, Criterion, ResearcherArticle } from "@/lib/types";
+import type { AnalysisRunSummary, Criterion, ModelScoreSummary, ResearcherArticle, ResearcherPublication } from "@/lib/types";
 import { excerpt, modelLabel, shortId } from "@/lib/format";
 import { Markdown, inline } from "@/components/markdown";
 import { BTN_DARK, BTN_OUTLINE, Card, Chip, ContentsRail, Notice, ScoreBar, ScorePill, ScoreRing, SegmentedTabs, Table, Td, Th, Tr, cx, type RailItem } from "@/components/ui";
-import { CheckIcon, DownloadIcon, RefreshIcon } from "@/components/ui/icons";
+import { CheckIcon, ChevronRightIcon, DownloadIcon, RefreshIcon } from "@/components/ui/icons";
 
 export const dynamic = "force-dynamic";
 
@@ -215,8 +215,10 @@ function Infobox({ r, run }: { r: ResearcherArticle; run: AnalysisRunSummary | n
         {run && run.score != null ? (
           <>
             <ScoreRing score={run.score} size={150} stroke="#2DD4A8" track="var(--c-ring-track)" strokeWidth={10} className="mt-4" label={t("ringLabel")} />
-            <p className="mt-4 font-mono text-[12px] text-[#8B919C]">
-              {t("infoStats", { spread: run.spread ?? "—", median: run.fieldMedian ?? "—", models: run.modelScores.length })}
+            <p className="mt-4 font-mono text-[12px] leading-relaxed text-[#8B919C]">
+              {t("infoAggregate", { n: run.publicationsAnalyzed, spread: run.spread ?? "—", median: run.fieldMedian ?? "—" })}
+              <br />
+              {t("infoModels", { models: run.models.length })}
             </p>
           </>
         ) : (
@@ -250,27 +252,32 @@ function Infobox({ r, run }: { r: ResearcherArticle; run: AnalysisRunSummary | n
   );
 }
 
+/** Per-criterion averages over the analysed publications; per-model columns are that model's averages. */
 function ScoreBreakdown({ r, run }: { r: ResearcherArticle; run: AnalysisRunSummary }) {
   const t = useTranslations("article");
   const tc = useTranslations("common");
-  const models = run.modelScores;
+  const models = run.modelAverages;
   const weights = r.field.weights;
   const totalW = CRITERIA.reduce((a, c) => a + (Number(weights[c]) || 0), 0) || 1;
 
-  const consensusFor = (c: Criterion) => (models.length ? Math.round(models.reduce((a, m) => a + m[c], 0) / models.length) : null);
+  // Average of every (publication, model) reading of a criterion.
+  const readings: ModelScoreSummary[] = r.publications.flatMap((p) => p.analysis?.modelScores ?? []);
+  const averageFor = (c: Criterion) => (readings.length ? Math.round(readings.reduce((a, m) => a + m[c], 0) / readings.length) : null);
   const lowestModel = models.length > 1 ? models.reduce((lo, m) => (m.weighted < lo.weighted ? m : lo), models[0]).model : null;
 
   return (
     <Card id="score-breakdown" className="mt-8 scroll-mt-6" padded>
       <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="font-serif text-[24px] font-medium text-ink">{t("scoreBreakdown")}</h2>
-        <p className="text-[12.5px] text-muted">{t("breakdownHint")}</p>
+        <p className="text-[12.5px] text-muted">
+          {t("breakdownNote", { n: run.publicationsAnalyzed })} · {t("breakdownHint")}
+        </p>
       </div>
       <Table minWidth={560}>
         <thead>
           <tr>
             <Th>{t("thCriterion")}</Th>
-            <Th className="w-[240px]">{t("thConsensus")}</Th>
+            <Th className="w-[240px]">{t("thAverage")}</Th>
             {models.map((m, i) => (
               <Th key={m.model} align="center" className={cx(m.model === lowestModel && "text-mid")}>
                 <abbr title={m.model} className="no-underline">
@@ -282,7 +289,7 @@ function ScoreBreakdown({ r, run }: { r: ResearcherArticle; run: AnalysisRunSumm
         </thead>
         <tbody>
           {CRITERIA.map((c) => {
-            const cons = consensusFor(c);
+            const avg = averageFor(c);
             const values = models.map((m) => m[c]);
             const min = values.length > 1 ? Math.min(...values) : null;
             return (
@@ -292,10 +299,10 @@ function ScoreBreakdown({ r, run }: { r: ResearcherArticle; run: AnalysisRunSumm
                   <span className="font-mono text-[11.5px] text-muted">×{(Number(weights[c]) / totalW).toFixed(2)}</span>
                 </Td>
                 <Td>
-                  {cons != null && (
+                  {avg != null && (
                     <div className="flex items-center gap-3">
-                      <ScoreBar score={cons} className="w-[140px] max-w-full" />
-                      <span className="font-mono text-[13.5px] font-semibold tabular text-ink">{cons}</span>
+                      <ScoreBar score={avg} className="w-[140px] max-w-full" />
+                      <span className="font-mono text-[13.5px] font-semibold tabular text-ink">{avg}</span>
                     </div>
                   )}
                 </Td>
@@ -332,61 +339,173 @@ function ScoreBreakdown({ r, run }: { r: ResearcherArticle; run: AnalysisRunSumm
   );
 }
 
+/** Centrepiece: one row per publication (most cited first), expandable to its per-paper analysis. */
 function Publications({ r }: { r: ResearcherArticle }) {
   const t = useTranslations("article");
-  const pubs = [...r.publications].sort((a, b) => b.year - a.year);
+  const fmt = useFormatter();
+  const pubs = [...r.publications].sort((a, b) => b.citationCount - a.citationCount || b.year - a.year || a.title.localeCompare(b.title));
+  const analyzed = pubs.filter((p) => p.analysis).length;
+  const gridCols = "grid-cols-[48px_minmax(0,1fr)_72px_40px_52px] sm:grid-cols-[56px_minmax(0,1fr)_88px_48px_60px]";
   return (
-    <Card id="publications" className="mt-10 scroll-mt-6">
-      <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+    <Card id="publications" className="mt-10 scroll-mt-6" padded={false}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2 px-5 pt-5 sm:px-6 sm:pt-6">
         <h2 className="font-serif text-[24px] font-medium text-ink">{t("publicationsAnalyzed")}</h2>
-        <p className="text-[12.5px] text-muted">{t("papersWithCode", { papers: pubs.length, code: r.openCodeCount })}</p>
+        <p className="text-[12.5px] text-muted">
+          {t("papersWithCode", { papers: pubs.length, code: r.openCodeCount })}
+          {analyzed > 0 ? ` · ${t("sortedByCitations")}` : null}
+        </p>
       </div>
       {pubs.length === 0 ? (
-        <p className="text-[14px] text-muted">{t("noPublications")}</p>
+        <p className="px-5 pb-5 pt-4 text-[14px] text-muted sm:px-6 sm:pb-6">{t("noPublications")}</p>
       ) : (
-        <Table minWidth={480}>
-          <thead>
-            <tr>
-              <Th>{t("thYear")}</Th>
-              <Th>{t("thTitle")}</Th>
-              <Th>{t("thVenue")}</Th>
-              <Th align="center">{t("thCode")}</Th>
-              <Th align="right">{t("thScore")}</Th>
-            </tr>
-          </thead>
-          <tbody>
+        <div className="mt-4 border-t border-border">
+          <div className={cx("grid items-center gap-x-3 px-5 py-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.06em] text-muted sm:px-6", gridCols)} aria-hidden="true">
+            <span>{t("thYear")}</span>
+            <span>{t("thTitle")}</span>
+            <span className="text-end">{t("thCitations")}</span>
+            <span className="text-center">{t("thCode")}</span>
+            <span className="text-end">{t("thScore")}</span>
+          </div>
+          <ul className="divide-y divide-hairline border-t border-border">
             {pubs.map((p) => (
-              <Tr key={p.id}>
-                <Td mono className="text-muted">
-                  {p.year}
-                </Td>
-                <Td>
-                  {p.url || p.doi ? (
-                    <a href={p.url ?? `https://doi.org/${p.doi}`} className="font-medium text-ink hover:underline" rel="noreferrer">
-                      {p.title}
-                    </a>
-                  ) : (
-                    <span className="font-medium text-ink">{p.title}</span>
-                  )}
-                </Td>
-                <Td className="text-[13px] text-muted">{p.venue ?? "—"}</Td>
-                <Td align="center">
-                  {p.hasCode ? (
-                    <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-high-bg text-high" title={t("publicCode")}>
-                      <CheckIcon size={13} />
-                      <span className="sr-only">{t("publicCode")}</span>
-                    </span>
-                  ) : (
-                    <span className="text-muted/50">—</span>
-                  )}
-                </Td>
-                <Td align="right">{p.score != null ? <ScorePill score={p.score} /> : <span className="text-muted">—</span>}</Td>
-              </Tr>
+              <li key={p.id}>
+                <PublicationRow p={p} gridCols={gridCols} fmt={fmt} />
+              </li>
             ))}
-          </tbody>
-        </Table>
+          </ul>
+        </div>
       )}
     </Card>
+  );
+}
+
+function PublicationRow({ p, gridCols, fmt }: { p: ResearcherPublication; gridCols: string; fmt: Formatter }) {
+  const t = useTranslations("article");
+  const a = p.analysis;
+  const row = (
+    <div className={cx("grid items-center gap-x-3 px-5 py-3 sm:px-6", gridCols)}>
+      <span className="font-mono text-[13px] tabular text-muted">{p.year}</span>
+      <span className="min-w-0">
+        <span className="flex items-center gap-1.5">
+          {a && <ChevronRightIcon size={12} className="details-marker shrink-0 text-muted transition-transform rtl:-scale-x-100" />}
+          <span className="font-medium text-ink">{p.title}</span>
+        </span>
+        <span className="block truncate text-[13px] text-muted">{p.venue ?? "—"}</span>
+      </span>
+      <span className="text-end font-mono text-[13px] tabular text-ink">{fmt.number(p.citationCount)}</span>
+      <span className="flex justify-center">
+        {p.hasCode ? (
+          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-high-bg text-high" title={t("publicCode")}>
+            <CheckIcon size={13} />
+            <span className="sr-only">{t("publicCode")}</span>
+          </span>
+        ) : (
+          <span className="text-muted/50">—</span>
+        )}
+      </span>
+      <span className="flex justify-end">
+        {a && a.score != null ? <ScorePill score={a.score} /> : <span className="text-[12px] text-muted">{t("notAnalyzed")}</span>}
+      </span>
+    </div>
+  );
+  if (!a) return row;
+  return (
+    <details className="group">
+      <summary className="cursor-pointer list-none hover:bg-page [&::-webkit-details-marker]:hidden">
+        {row}
+        <span className="sr-only">{t("showAnalysis")}</span>
+      </summary>
+      <PublicationAnalysis p={p} />
+    </details>
+  );
+}
+
+function PublicationAnalysis({ p }: { p: ResearcherPublication }) {
+  const t = useTranslations("article");
+  const a = p.analysis!;
+  const models = a.modelScores;
+  const link = p.url ?? (p.doi ? `https://doi.org/${p.doi}` : null);
+  return (
+    <div className="border-t border-hairline bg-page/60 px-5 pb-5 pt-4 sm:px-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] text-muted">
+            {a.spread != null && <span className="font-mono">{t("paperSpread", { spread: a.spread })}</span>}
+            {link && (
+              <a href={link} className="font-mono text-[12.5px] text-link hover:underline" rel="noreferrer">
+                {p.doi ? `doi:${p.doi}` : link}
+              </a>
+            )}
+          </div>
+          {a.summary && (
+            <>
+              <h4 className="mt-3 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{t("paperSummary")}</h4>
+              <Markdown text={a.summary} className="mt-1 text-[15px]" />
+            </>
+          )}
+          <div className="mt-4 grid gap-4 sm:grid-cols-2">
+            {a.strengths.length > 0 && (
+              <div>
+                <h4 className="font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-high">{t("paperStrengths")}</h4>
+                <ul className="mt-1.5 space-y-1 text-[14px] text-text">
+                  {a.strengths.map((s, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-high" aria-hidden="true" />
+                      <span>{inline(s)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            {a.concerns.length > 0 && (
+              <div>
+                <h4 className="font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-mid">{t("paperConcerns")}</h4>
+                <ul className="mt-1.5 space-y-1 text-[14px] text-text">
+                  {a.concerns.map((s, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span className="mt-[9px] h-1.5 w-1.5 shrink-0 rounded-full bg-mid" aria-hidden="true" />
+                      <span>{inline(s)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className="min-w-0">
+          <div className="flex items-baseline justify-between">
+            <h4 className="font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{t("thCriterion")}</h4>
+            <span className="font-mono text-[10.5px] uppercase tracking-[0.08em] text-muted">
+              {t("paperPerModel")}: {models.map((m, i) => modelLabel(m.model, i)).join(" · ")}
+            </span>
+          </div>
+          <dl className="mt-2 flex flex-col gap-2.5">
+            {CRITERIA.map((c) => {
+              const avg = models.length ? Math.round(models.reduce((acc, m) => acc + m[c], 0) / models.length) : 0;
+              return (
+                <div key={c}>
+                  <dt className="flex items-baseline justify-between text-[13px]">
+                    <span className="font-medium text-ink">{t(`criteria.${c}`)}</span>
+                    <span className="font-mono text-[12.5px] tabular text-muted">
+                      {models.map((m, i) => (
+                        <span key={m.model} title={m.model}>
+                          {i > 0 && <span className="text-muted/50"> · </span>}
+                          {m[c]}
+                        </span>
+                      ))}
+                    </span>
+                  </dt>
+                  <dd className="mt-1 flex items-center gap-2">
+                    <ScoreBar score={avg} className="flex-1" />
+                    <span className="w-7 text-end font-mono text-[12.5px] font-semibold tabular text-ink">{avg}</span>
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -412,7 +531,7 @@ function Provenance({ r, run, previousRuns }: { r: ResearcherArticle; run: Analy
       ),
       hint: t("provSha", { sha: shortId(run.promptSha, 12) }),
     },
-    { label: t("provModels"), value: run.modelScores.map((m) => m.model).join(", ") || "—", hint: t("provReadings", { count: run.modelScores.length }) },
+    { label: t("provModels"), value: run.models.join(", ") || "—", hint: t("provReadings", { count: run.models.length * run.publicationsAnalyzed }) },
     { label: t("provRun"), value: `#${shortId(run.id)}`, hint: t("provDuration", { duration: duration(run.durationSec) }) },
     { label: t("provSources"), value: t("provSourcesValue"), hint: r.openalexId ? `OpenAlex ${r.openalexId}` : "OpenAlex" },
     { label: t("provSubmitted"), value: fmtDate(fmt, r.createdAt), hint: t("provPublished", { date: fmtDate(fmt, run.finishedAt) }) },

@@ -55,7 +55,7 @@
     "statFields": "Fält",
     "statQueue": "I kö",
     "featured": "Utvald analys",
-    "papersModels": "{papers, plural, one {# artikel} other {# artiklar}} · {models, plural, one {# modell} other {# modeller}}",
+    "papersAnalyzedModels": "{papers, plural, one {# artikel} other {# artiklar}} analyserade · {models, plural, one {# modell} other {# modeller}}",
     "readAnalysis": "Läs analysen",
     "noAnalysis": "Ingen analys har publicerats ännu. Den första begäran i kön visas här.",
     "recentlyPublished": "Nyligen publicerade",
@@ -65,10 +65,22 @@
     "allFields": "Alla fält",
     "howItWorks": "Så fungerar PeerScore",
     "steps": {
-      "1": { "title": "Skicka in ett namn", "body": "Vem som helst kan föreslå en forskare. Ett fält, inget konto — begäran hamnar i en offentlig kö." },
-      "2": { "title": "Publikationer samlas in", "body": "En worker identifierar forskaren i öppna vetenskapliga register och hämtar publikationernas metadata och sammanfattningar." },
-      "3": { "title": "Fältspecifik analys", "body": "Flera språkmodeller läser publikationerna med en prompt skriven för fältet och poängsätter fem kriterier oberoende av varandra." },
-      "4": { "title": "Artikeln publiceras", "body": "Poängen vägs samman till ett konsensus och hela genomgången, med varje oenighet, publiceras inom 24–48 h." }
+      "1": {
+        "title": "Skicka in ett namn",
+        "body": "Vem som helst kan föreslå en forskare. Ett fält, inget konto — begäran hamnar i en offentlig kö."
+      },
+      "2": {
+        "title": "Publikationer samlas in",
+        "body": "En worker identifierar forskaren i öppna vetenskapliga register och hämtar publikationernas metadata och sammanfattningar."
+      },
+      "3": {
+        "title": "Fältspecifik analys",
+        "body": "Flera språkmodeller läser publikationerna med en prompt skriven för fältet och poängsätter fem kriterier oberoende av varandra."
+      },
+      "4": {
+        "title": "Artikeln publiceras",
+        "body": "Poängen vägs samman till ett konsensus och hela genomgången, med varje oenighet, publiceras inom 24–48 h."
+      }
     },
     "reproducibleTitle": "Varje analys går att reproducera.",
     "reproducibleBody": "Prompterna är versionerade och hashade, modellernas svar sparas ordagrant och hela pipelinen är öppen källkod. Analyserna genereras av språkmodeller och kan innehålla fel — rapportera ett från valfri artikelsida.",
@@ -108,6 +120,7 @@
     "thPubs": "Publ.",
     "thScore": "Poäng",
     "thAnalyzed": "Analyserad",
+    "analyzedCount": "{n} analyserade",
     "analyzing": "analyseras",
     "queuedEta": "i kö · 24–48 h",
     "pagination": "Sidnavigering",
@@ -139,7 +152,7 @@
     "from": "Från PeerScore, det öppna forskarindexet",
     "notice": "Den här artikeln skrevs av språkmodeller utifrån publikationernas metadata och sammanfattningar. Den kan innehålla fel och är inte en sakkunniggranskning. Poängen speglar modellernas läsning, inte någon institutions åsikt.",
     "disagreeTitle": "Där modellerna är oense",
-    "spreadPoints": "Spridning på <n>{spread}</n> poäng mellan den högsta och den lägsta modellen.",
+    "spreadPoints": "Spridning på <n>{spread}</n> poäng mellan den högst och den lägst bedömda publikationen.",
     "categories": "Kategorier",
     "published": "Publicerad",
     "inQueue": "I kö",
@@ -153,13 +166,15 @@
     "infoTopics": "Ämnen",
     "infoLastRun": "Senaste körning",
     "ringLabel": "/ 100",
-    "infoStats": "spridning {spread} · fältmedian {median} · {models, plural, one {# modell} other {# modeller}}",
+    "infoAggregate": "citeringsviktat medelvärde av {n, plural, one {# artikel} other {# artiklar}} · spridning {spread} · fältets median {median}",
+    "infoModels": "{models, plural, one {# modell} other {# modeller}} per publikation",
     "analyzing": "analyseras",
     "queued": "i kö",
     "scoreWithin": "poäng tillgänglig inom 24–48 h",
     "breakdownHint": "Vikter sätts per fält · lägsta modell per rad är markerad",
+    "breakdownNote": "medelvärde över {n, plural, one {# artikel} other {# artiklar}}",
     "thCriterion": "Kriterium",
-    "thConsensus": "Konsensus",
+    "thAverage": "Medel",
     "criteria": {
       "rigor": "Stringens",
       "reproducibility": "Reproducerbarhet",
@@ -174,9 +189,18 @@
     "thYear": "År",
     "thTitle": "Titel",
     "thVenue": "Forum",
+    "thCitations": "Citeringar",
     "thCode": "Kod",
     "thScore": "Poäng",
     "publicCode": "Öppen kod",
+    "sortedByCitations": "sorterade efter citeringar",
+    "paperSummary": "Sammanfattning",
+    "paperStrengths": "Styrkor",
+    "paperConcerns": "Invändningar",
+    "paperPerModel": "Per modell",
+    "paperSpread": "spridning mellan modeller {spread}",
+    "notAnalyzed": "inte analyserad",
+    "showAnalysis": "Visa analys",
     "provPrompt": "Prompt",
     "provSha": "sha {sha}",
     "provModels": "Modeller",
@@ -208,10 +232,26 @@
     "intro": "Ett fält, inget konto. Begäran hamnar i en offentlig kö och artikeln publiceras automatiskt när analysen är klar.",
     "whatHappensNext": "Vad händer sedan",
     "steps": {
-      "1": { "when": "minuter", "title": "I kö", "body": "Din begäran sparas med ett offentligt id och en plats i kön. Inget annat samlas in om dig." },
-      "2": { "when": "timmar", "title": "Publikationer insamlade", "body": "En worker identifierar namnet i öppna vetenskapliga register och hämtar metadata, sammanfattningar och kodlänkar." },
-      "3": { "when": "timmar", "title": "Fältspecifik analys", "body": "Flera språkmodeller läser publikationerna med en prompt skriven för fältet och poängsätter fem kriterier oberoende av varandra." },
-      "4": { "when": "24–48 h", "title": "Artikel publicerad", "body": "Poängen vägs samman, genomgången och varje oenighet publiceras och sidan går live automatiskt." }
+      "1": {
+        "when": "minuter",
+        "title": "I kö",
+        "body": "Din begäran sparas med ett offentligt id och en plats i kön. Inget annat samlas in om dig."
+      },
+      "2": {
+        "when": "timmar",
+        "title": "Publikationer insamlade",
+        "body": "En worker identifierar namnet i öppna vetenskapliga register och hämtar metadata, sammanfattningar och kodlänkar."
+      },
+      "3": {
+        "when": "timmar",
+        "title": "Fältspecifik analys",
+        "body": "Flera språkmodeller läser publikationerna med en prompt skriven för fältet och poängsätter fem kriterier oberoende av varandra."
+      },
+      "4": {
+        "when": "24–48 h",
+        "title": "Artikel publicerad",
+        "body": "Poängen vägs samman, genomgången och varje oenighet publiceras och sidan går live automatiskt."
+      }
     },
     "whoCanBeSubmitted": "Vem kan föreslås",
     "eligible": {

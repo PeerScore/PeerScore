@@ -85,7 +85,10 @@ export interface ResolvedPublication {
   url: string | null;
   abstract: string | null;
   hasCode: boolean;
+  /** OpenAlex `cited_by_count` (stored as Publication.citationCount). */
   citedBy: number;
+  /** OpenAlex work id without the URL prefix (e.g. "W2741809807"). */
+  openalexId: string | null;
 }
 
 export interface ResolvedResearcher {
@@ -153,6 +156,7 @@ export function mapWork(work: OpenAlexWork): ResolvedPublication | null {
     abstract,
     hasCode: detectCode(work, abstract),
     citedBy: work.cited_by_count ?? 0,
+    openalexId: work.id ? work.id.replace(/^https?:\/\/openalex\.org\//i, "") || null : null,
   };
 }
 

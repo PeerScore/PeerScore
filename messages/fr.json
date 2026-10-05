@@ -55,7 +55,7 @@
     "statFields": "Domaines",
     "statQueue": "En attente",
     "featured": "Analyse à la une",
-    "papersModels": "{papers, plural, one {# article} other {# articles}} · {models, plural, one {# modèle} other {# modèles}}",
+    "papersAnalyzedModels": "{papers, plural, one {# article} other {# articles}} analysés · {models, plural, one {# modèle} other {# modèles}}",
     "readAnalysis": "Lire l’analyse",
     "noAnalysis": "Aucune analyse n’a encore été publiée. La première demande de la file d’attente apparaîtra ici.",
     "recentlyPublished": "Publiés récemment",
@@ -65,10 +65,22 @@
     "allFields": "Tous les domaines",
     "howItWorks": "Comment fonctionne PeerScore",
     "steps": {
-      "1": { "title": "Proposez un nom", "body": "N’importe qui peut proposer un chercheur. Un seul champ, pas de compte — la demande rejoint une file d’attente publique." },
-      "2": { "title": "Les publications sont collectées", "body": "Un worker identifie le chercheur dans les bases scientifiques ouvertes et télécharge les métadonnées et les résumés de ses publications." },
-      "3": { "title": "Analyse propre au domaine", "body": "Plusieurs modèles de langage lisent les publications avec un prompt écrit pour le domaine et notent cinq critères de façon indépendante." },
-      "4": { "title": "L’article est mis en ligne", "body": "Les scores sont agrégés en un consensus pondéré et le compte rendu complet, avec chaque désaccord, est publié sous 24 à 48 h." }
+      "1": {
+        "title": "Proposez un nom",
+        "body": "N’importe qui peut proposer un chercheur. Un seul champ, pas de compte — la demande rejoint une file d’attente publique."
+      },
+      "2": {
+        "title": "Les publications sont collectées",
+        "body": "Un worker identifie le chercheur dans les bases scientifiques ouvertes et télécharge les métadonnées et les résumés de ses publications."
+      },
+      "3": {
+        "title": "Analyse propre au domaine",
+        "body": "Plusieurs modèles de langage lisent les publications avec un prompt écrit pour le domaine et notent cinq critères de façon indépendante."
+      },
+      "4": {
+        "title": "L’article est mis en ligne",
+        "body": "Les scores sont agrégés en un consensus pondéré et le compte rendu complet, avec chaque désaccord, est publié sous 24 à 48 h."
+      }
     },
     "reproducibleTitle": "Chaque analyse est reproductible.",
     "reproducibleBody": "Les prompts sont versionnés et hachés, les sorties des modèles sont conservées telles quelles et toute la chaîne est open source. Les analyses sont générées par des modèles de langage et peuvent contenir des erreurs — signalez-en une depuis n’importe quelle page d’article.",
@@ -108,6 +120,7 @@
     "thPubs": "Publ.",
     "thScore": "Score",
     "thAnalyzed": "Analysé le",
+    "analyzedCount": "{n} analysés",
     "analyzing": "analyse en cours",
     "queuedEta": "en attente · 24–48 h",
     "pagination": "Pagination",
@@ -139,7 +152,7 @@
     "from": "Extrait de PeerScore, l’index ouvert des chercheurs",
     "notice": "Cet article a été rédigé par des modèles de langage à partir des métadonnées et des résumés des publications. Il peut contenir des erreurs et ne constitue pas une évaluation par les pairs. Les scores reflètent la lecture des modèles, pas l’avis d’une institution.",
     "disagreeTitle": "Là où les modèles divergent",
-    "spreadPoints": "Écart de <n>{spread}</n> points entre le modèle le plus haut et le plus bas.",
+    "spreadPoints": "Écart de <n>{spread}</n> points entre la publication la mieux notée et la moins bien notée.",
     "categories": "Catégories",
     "published": "Publié",
     "inQueue": "En attente",
@@ -153,13 +166,15 @@
     "infoTopics": "Sujets",
     "infoLastRun": "Dernière exécution",
     "ringLabel": "/ 100",
-    "infoStats": "écart {spread} · médiane du domaine {median} · {models, plural, one {# modèle} other {# modèles}}",
+    "infoAggregate": "moyenne pondérée par les citations de {n, plural, one {# article} other {# articles}} · écart {spread} · médiane du domaine {median}",
+    "infoModels": "{models, plural, one {# modèle} other {# modèles}} par publication",
     "analyzing": "analyse",
     "queued": "en attente",
     "scoreWithin": "score disponible sous 24–48 h",
     "breakdownHint": "Pondérations définies par domaine · le modèle le plus bas de chaque ligne est surligné",
+    "breakdownNote": "moyenne sur {n, plural, one {# article} other {# articles}}",
     "thCriterion": "Critère",
-    "thConsensus": "Consensus",
+    "thAverage": "Moyenne",
     "criteria": {
       "rigor": "Rigueur",
       "reproducibility": "Reproductibilité",
@@ -174,9 +189,18 @@
     "thYear": "Année",
     "thTitle": "Titre",
     "thVenue": "Revue / conférence",
+    "thCitations": "Citations",
     "thCode": "Code",
     "thScore": "Score",
     "publicCode": "Code public",
+    "sortedByCitations": "triés par citations",
+    "paperSummary": "Résumé",
+    "paperStrengths": "Points forts",
+    "paperConcerns": "Réserves",
+    "paperPerModel": "Par modèle",
+    "paperSpread": "écart entre modèles {spread}",
+    "notAnalyzed": "non analysé",
+    "showAnalysis": "Afficher l'analyse",
     "provPrompt": "Prompt",
     "provSha": "sha {sha}",
     "provModels": "Modèles",
@@ -208,10 +232,26 @@
     "intro": "Un seul champ, pas de compte. La demande rejoint une file d’attente publique et l’article est publié automatiquement une fois l’analyse terminée.",
     "whatHappensNext": "Et ensuite ?",
     "steps": {
-      "1": { "when": "minutes", "title": "En attente", "body": "Votre demande est enregistrée avec un identifiant public et une position dans la file. Rien d’autre n’est collecté à votre sujet." },
-      "2": { "when": "heures", "title": "Publications collectées", "body": "Un worker identifie le nom dans les bases scientifiques ouvertes et télécharge les métadonnées, les résumés et les liens vers le code." },
-      "3": { "when": "heures", "title": "Analyse propre au domaine", "body": "Plusieurs modèles de langage lisent les publications avec un prompt écrit pour le domaine et notent cinq critères de façon indépendante." },
-      "4": { "when": "24–48 h", "title": "Article publié", "body": "Les scores sont agrégés, le compte rendu et chaque désaccord sont publiés, et la page est mise en ligne automatiquement." }
+      "1": {
+        "when": "minutes",
+        "title": "En attente",
+        "body": "Votre demande est enregistrée avec un identifiant public et une position dans la file. Rien d’autre n’est collecté à votre sujet."
+      },
+      "2": {
+        "when": "heures",
+        "title": "Publications collectées",
+        "body": "Un worker identifie le nom dans les bases scientifiques ouvertes et télécharge les métadonnées, les résumés et les liens vers le code."
+      },
+      "3": {
+        "when": "heures",
+        "title": "Analyse propre au domaine",
+        "body": "Plusieurs modèles de langage lisent les publications avec un prompt écrit pour le domaine et notent cinq critères de façon indépendante."
+      },
+      "4": {
+        "when": "24–48 h",
+        "title": "Article publié",
+        "body": "Les scores sont agrégés, le compte rendu et chaque désaccord sont publiés, et la page est mise en ligne automatiquement."
+      }
     },
     "whoCanBeSubmitted": "Qui peut être proposé",
     "eligible": {

@@ -1,5 +1,6 @@
 // Smoke test: run one worker pass against the local database in mock mode
-// (LLM_MOCK=1, OPENALEX_FIXTURE=1) and print the published slug + score.
+// (LLM_MOCK=1, OPENALEX_FIXTURE=1) and print the published slug, the
+// aggregate score and the per-publication scores.
 // Exits 0 when the database is unreachable (prints why) so it is safe in CI.
 //
 //   npx tsx worker/scripts/smoke.ts
@@ -36,8 +37,12 @@ async function main(): Promise<void> {
     console.log(`smoke: processing "${submission.name}" (${submission.id})`);
     const result = await processSubmission(submission);
     console.log(
-      `smoke: PUBLISHED /researchers/${result.slug} — score ${result.score} (spread ${result.spread}) from ${result.models.join(", ")}`,
+      `smoke: PUBLISHED /researchers/${result.slug} — score ${result.score} (spread ${result.spread}) ` +
+        `from ${result.publicationsAnalyzed}/${result.publications.length} publications read by ${result.models.join(", ")}`,
     );
+    for (const p of result.publications) {
+      console.log(`smoke:   ${p.score ?? "FAILED"}${p.spread != null ? ` (±${p.spread})` : ""}  ${p.citationCount} cit.  ${p.title}`);
+    }
   } finally {
     await prisma.$disconnect();
   }

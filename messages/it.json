@@ -55,7 +55,7 @@
     "statFields": "Campi",
     "statQueue": "In coda",
     "featured": "Analisi in evidenza",
-    "papersModels": "{papers, plural, one {# articolo} other {# articoli}} · {models, plural, one {# modello} other {# modelli}}",
+    "papersAnalyzedModels": "{papers, plural, one {# articolo} other {# articoli}} analizzati · {models, plural, one {# modello} other {# modelli}}",
     "readAnalysis": "Leggi l’analisi",
     "noAnalysis": "Nessuna analisi è ancora stata pubblicata. La prima richiesta in coda comparirà qui.",
     "recentlyPublished": "Pubblicati di recente",
@@ -65,10 +65,22 @@
     "allFields": "Tutti i campi",
     "howItWorks": "Come funziona PeerScore",
     "steps": {
-      "1": { "title": "Proponi un nome", "body": "Chiunque può proporre un ricercatore. Un solo campo, nessun account: la richiesta entra in una coda pubblica." },
-      "2": { "title": "Le pubblicazioni vengono raccolte", "body": "Un worker identifica il ricercatore negli archivi accademici aperti e scarica i metadati e gli abstract delle pubblicazioni." },
-      "3": { "title": "Analisi specifica per il campo", "body": "Più modelli linguistici leggono le pubblicazioni con un prompt scritto per il campo e valutano cinque criteri in modo indipendente." },
-      "4": { "title": "L’articolo va online", "body": "I punteggi vengono aggregati in un consenso ponderato e il rapporto completo, con ogni disaccordo, viene pubblicato entro 24–48 h." }
+      "1": {
+        "title": "Proponi un nome",
+        "body": "Chiunque può proporre un ricercatore. Un solo campo, nessun account: la richiesta entra in una coda pubblica."
+      },
+      "2": {
+        "title": "Le pubblicazioni vengono raccolte",
+        "body": "Un worker identifica il ricercatore negli archivi accademici aperti e scarica i metadati e gli abstract delle pubblicazioni."
+      },
+      "3": {
+        "title": "Analisi specifica per il campo",
+        "body": "Più modelli linguistici leggono le pubblicazioni con un prompt scritto per il campo e valutano cinque criteri in modo indipendente."
+      },
+      "4": {
+        "title": "L’articolo va online",
+        "body": "I punteggi vengono aggregati in un consenso ponderato e il rapporto completo, con ogni disaccordo, viene pubblicato entro 24–48 h."
+      }
     },
     "reproducibleTitle": "Ogni analisi è riproducibile.",
     "reproducibleBody": "I prompt sono versionati e firmati con hash, gli output dei modelli sono conservati così come sono e l’intera pipeline è open source. Le analisi sono generate da modelli linguistici e possono contenere errori: segnalane uno da qualsiasi pagina di articolo.",
@@ -108,6 +120,7 @@
     "thPubs": "Pubbl.",
     "thScore": "Punteggio",
     "thAnalyzed": "Analizzato",
+    "analyzedCount": "{n} analizzati",
     "analyzing": "in analisi",
     "queuedEta": "in coda · 24–48 h",
     "pagination": "Paginazione",
@@ -139,7 +152,7 @@
     "from": "Da PeerScore, l’indice aperto dei ricercatori",
     "notice": "Questo articolo è stato scritto da modelli linguistici a partire dai metadati e dagli abstract delle pubblicazioni. Può contenere errori e non è una revisione tra pari. I punteggi riflettono la lettura dei modelli, non l’opinione di alcuna istituzione.",
     "disagreeTitle": "Dove i modelli non concordano",
-    "spreadPoints": "Scarto di <n>{spread}</n> punti tra il modello più alto e quello più basso.",
+    "spreadPoints": "Dispersione di <n>{spread}</n> punti tra la pubblicazione con il punteggio più alto e quella con il più basso.",
     "categories": "Categorie",
     "published": "Pubblicato",
     "inQueue": "In coda",
@@ -153,13 +166,15 @@
     "infoTopics": "Argomenti",
     "infoLastRun": "Ultima esecuzione",
     "ringLabel": "/ 100",
-    "infoStats": "scarto {spread} · mediana del campo {median} · {models, plural, one {# modello} other {# modelli}}",
+    "infoAggregate": "media ponderata per citazioni di {n, plural, one {# articolo} other {# articoli}} · dispersione {spread} · mediana del campo {median}",
+    "infoModels": "{models, plural, one {# modello} other {# modelli}} per pubblicazione",
     "analyzing": "in analisi",
     "queued": "in coda",
     "scoreWithin": "punteggio disponibile entro 24–48 h",
     "breakdownHint": "I pesi sono definiti per campo · evidenziato il modello più basso di ogni riga",
+    "breakdownNote": "media su {n, plural, one {# articolo} other {# articoli}}",
     "thCriterion": "Criterio",
-    "thConsensus": "Consenso",
+    "thAverage": "Media",
     "criteria": {
       "rigor": "Rigore",
       "reproducibility": "Riproducibilità",
@@ -174,9 +189,18 @@
     "thYear": "Anno",
     "thTitle": "Titolo",
     "thVenue": "Sede",
+    "thCitations": "Citazioni",
     "thCode": "Codice",
     "thScore": "Punteggio",
     "publicCode": "Codice pubblico",
+    "sortedByCitations": "ordinati per citazioni",
+    "paperSummary": "Sintesi",
+    "paperStrengths": "Punti di forza",
+    "paperConcerns": "Riserve",
+    "paperPerModel": "Per modello",
+    "paperSpread": "dispersione tra modelli {spread}",
+    "notAnalyzed": "non analizzato",
+    "showAnalysis": "Mostra analisi",
     "provPrompt": "Prompt",
     "provSha": "sha {sha}",
     "provModels": "Modelli",
@@ -208,10 +232,26 @@
     "intro": "Un solo campo, nessun account. La richiesta entra in una coda pubblica e l’articolo viene pubblicato automaticamente al termine dell’analisi.",
     "whatHappensNext": "Cosa succede dopo",
     "steps": {
-      "1": { "when": "minuti", "title": "In coda", "body": "La tua richiesta viene salvata con un identificativo pubblico e una posizione in coda. Non viene raccolto nient’altro su di te." },
-      "2": { "when": "ore", "title": "Pubblicazioni raccolte", "body": "Un worker identifica il nome negli archivi accademici aperti e scarica metadati, abstract e link al codice." },
-      "3": { "when": "ore", "title": "Analisi specifica per il campo", "body": "Più modelli linguistici leggono le pubblicazioni con un prompt scritto per il campo e valutano cinque criteri in modo indipendente." },
-      "4": { "when": "24–48 h", "title": "Articolo pubblicato", "body": "I punteggi vengono aggregati, il rapporto e ogni disaccordo vengono pubblicati e la pagina va online automaticamente." }
+      "1": {
+        "when": "minuti",
+        "title": "In coda",
+        "body": "La tua richiesta viene salvata con un identificativo pubblico e una posizione in coda. Non viene raccolto nient’altro su di te."
+      },
+      "2": {
+        "when": "ore",
+        "title": "Pubblicazioni raccolte",
+        "body": "Un worker identifica il nome negli archivi accademici aperti e scarica metadati, abstract e link al codice."
+      },
+      "3": {
+        "when": "ore",
+        "title": "Analisi specifica per il campo",
+        "body": "Più modelli linguistici leggono le pubblicazioni con un prompt scritto per il campo e valutano cinque criteri in modo indipendente."
+      },
+      "4": {
+        "when": "24–48 h",
+        "title": "Articolo pubblicato",
+        "body": "I punteggi vengono aggregati, il rapporto e ogni disaccordo vengono pubblicati e la pagina va online automaticamente."
+      }
     },
     "whoCanBeSubmitted": "Chi può essere proposto",
     "eligible": {

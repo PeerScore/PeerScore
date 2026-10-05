@@ -1,6 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  aggregateResearcherScore,
+  citationWeight,
   consensus,
   median,
   scoreBand,
@@ -78,4 +80,25 @@ test("median handles odd, even and empty lists", () => {
   assert.equal(median([3, 1, 2]), 2);
   assert.equal(median([1, 2, 3, 4]), 3); // 2.5 rounds to 3
   assert.equal(median([]), null);
+});
+
+test("citationWeight is 1 for uncited papers and grows logarithmically", () => {
+  assert.equal(citationWeight(0), 1);
+  assert.equal(citationWeight(-5), 1);
+  assert.ok(Math.abs(citationWeight(Math.E - 1) - 2) < 1e-9);
+  assert.ok(citationWeight(1000) < citationWeight(10) * 3);
+});
+
+test("aggregateResearcherScore is the citation-weighted mean, rounded", () => {
+  // Equal citations → plain mean.
+  assert.equal(aggregateResearcherScore([{ score: 80, citationCount: 0 }, { score: 60, citationCount: 0 }]), 70);
+  // A heavily cited paper pulls the mean towards its score.
+  const weighted = aggregateResearcherScore([{ score: 90, citationCount: 1000 }, { score: 50, citationCount: 0 }])!;
+  assert.ok(weighted > 70 && weighted < 90, `got ${weighted}`);
+  // w = 1 + ln(1 + c): c = e−1 → 2, c = 0 → 1: (2·90 + 1·60) / 3 = 80
+  assert.equal(aggregateResearcherScore([{ score: 90, citationCount: Math.E - 1 }, { score: 60, citationCount: 0 }]), 80);
+  // Unscored papers are ignored; nothing scored → null.
+  assert.equal(aggregateResearcherScore([{ score: null, citationCount: 50 }, { score: 64, citationCount: 3 }]), 64);
+  assert.equal(aggregateResearcherScore([{ score: null, citationCount: 50 }]), null);
+  assert.equal(aggregateResearcherScore([]), null);
 });

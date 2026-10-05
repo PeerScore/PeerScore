@@ -3,13 +3,13 @@
 
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { describeDisagreement, medianIndex, mergePublicationScores, mergeResults, type ModelResult } from "./merge";
+import { describeDisagreement, mapLimit, medianIndex, mergePaperResults, widestDisagreement, type ModelResult } from "./merge";
 import { mapOpenAlexField, mapTopic, primaryFieldFromTopics } from "./fields";
-import { createMockProvider, generateMockOutput } from "./llm/mock";
-import { completeAnalysis, extractJson, LlmOutputError, parseAnalysis } from "./llm/parse";
+import { createMockProvider, generateMockPaperOutput, generateMockSynthesis } from "./llm/mock";
+import { completeAnalysis, completeSynthesis, extractJson, LlmOutputError, parseAnalysis, parseSynthesis } from "./llm/parse";
 import { buildProviders } from "./llm";
-import { buildUserMessage, parseFrontMatter, loadPrompt, promptSha, truncate } from "./prompts";
-import { analysisOutputSchema, type AnalysisOutput } from "./schema";
+import { buildPaperMessage, buildSynthesisMessage, parseFrontMatter, loadPrompt, loadSynthesisPrompt, promptSha, truncate, type SynthesisPaper } from "./prompts";
+import { paperAnalysisSchema, type PaperAnalysisOutput } from "./schema";
 import {
   detectCode,
   loadFixture,
@@ -84,6 +84,8 @@ test("mapWork maps the fixture works (doi cleaned, venue, hasCode)", () => {
   const first = mapped[0]!;
   assert.equal(first.doi, "10.1101/gr.000001");
   assert.equal(first.year, 2023);
+  assert.ok(first.citedBy > 0);
+  assert.match(first.openalexId ?? "", /^W\d+$/);
   assert.ok(first.venue);
   assert.ok(first.abstract && first.abstract.length > 20);
   assert.ok(mapped.some((p) => p.hasCode));
@@ -126,49 +128,102 @@ test("parseFrontMatter + loadPrompt read version and compute a stable sha", () =
   for (const key of ["compbio", "ml", "physics-cm", "oncology", "applied-math", "marine-ecology", "behavioral-econ", "astrophysics", "general"]) {
     const p = loadPrompt(key);
     assert.equal(p.promptKey, key);
-    assert.equal(p.version, "1");
+    assert.equal(p.version, "2");
     assert.match(p.sha, /^sha256:[0-9a-f]{12}$/);
-    assert.ok(p.system.includes("Methods and rigor"), `${key} prompt names the sections`);
+    assert.ok(p.system.includes("ONE publication"), `${key} prompt reviews one publication`);
+    assert.ok(!p.system.includes("publicationScores"), `${key} prompt has no per-list scores any more`);
   }
   assert.equal(loadPrompt("does-not-exist").promptKey, "general");
+  const synth = loadSynthesisPrompt();
+  assert.equal(synth.promptKey, "_synthesis");
+  assert.equal(synth.version, "2");
+  assert.ok(synth.system.includes("Methods and rigor"), "synthesis prompt names the sections");
 });
 
-test("buildUserMessage numbers publications and truncates abstracts", () => {
-  const user = buildUserMessage(
-    { name: "Ada Lovelace", affiliation: "Analytical Engine Co", country: "UK", activeFrom: 1840, activeTo: null, topics: ["computing"] },
-    [
-      { title: "Notes", year: 1843, venue: "Taylor's Scientific Memoirs", abstract: "x ".repeat(2000), hasCode: true, doi: "10.1/notes" },
-      { title: "Letters", year: 1845, venue: null, abstract: null, hasCode: false, doi: null },
-    ],
-    "Applied Mathematics",
-  );
+const ADA = { name: "Ada Lovelace", affiliation: "Analytical Engine Co", country: "UK", activeFrom: 1840, activeTo: null, topics: ["computing"] };
+
+test("buildPaperMessage describes one paper and truncates the abstract", () => {
+  const user = buildPaperMessage(ADA, { title: "Notes", year: 1843, venue: "Taylor's Scientific Memoirs", abstract: "x ".repeat(2000), hasCode: true, doi: "10.1/notes", citedBy: 12 }, "Applied Mathematics");
+  assert.match(user, /^# Publication$/m);
+  assert.match(user, /^Title: Notes$/m);
+  assert.match(user, /^Venue: Taylor's Scientific Memoirs$/m);
+  assert.match(user, /^Citations: 12$/m);
+  assert.match(user, /^Code available: yes$/m);
   assert.match(user, /^Name: Ada Lovelace$/m);
-  assert.match(user, /^\[1\] Notes \(1843, \*Taylor's Scientific Memoirs\*\) — code available — doi:10\.1\/notes$/m);
-  assert.match(user, /^\[2\] Letters \(1845\)$/m);
-  assert.ok(user.includes("Abstract: not available."));
-  assert.ok(user.includes("exactly 2 integers"));
+  assert.ok(user.indexOf("# Publication") < user.indexOf("# Author context"));
+  const abstractLine = user.match(/^Abstract: (.+)$/m)![1];
+  assert.ok(abstractLine.length <= 901);
+  const bare = buildPaperMessage(ADA, { title: "Letters", year: 1845, venue: null, abstract: null, hasCode: false, doi: null }, "Applied Mathematics");
+  assert.match(bare, /^Venue: not available$/m);
+  assert.match(bare, /^Abstract: not available\.$/m);
+  assert.match(bare, /^Code available: not found$/m);
   assert.ok(truncate("x ".repeat(2000)).length <= 901);
+});
+
+function paper(title: string, overrides: Partial<SynthesisPaper> = {}): SynthesisPaper {
+  const scores = { rigor: 70, reproducibility: 60, novelty: 65, impact: 72, clarity: 68 };
+  return {
+    title,
+    year: 2020,
+    venue: "Venue",
+    citationCount: 10,
+    hasCode: false,
+    score: 67,
+    spread: 4,
+    summary: `summary of ${title}`,
+    strengths: ["s"],
+    concerns: ["c"],
+    modelScores: [
+      { model: "model-a", weighted: 69, scores, rationale: { novelty: "a says" } },
+      { model: "model-b", weighted: 65, scores, rationale: { novelty: "b says" } },
+    ],
+    ...overrides,
+  };
+}
+
+test("buildSynthesisMessage numbers the per-paper reviews and carries the disagreement", () => {
+  const user = buildSynthesisMessage({
+    researcher: ADA,
+    fieldName: "Applied Mathematics",
+    papers: [paper("Notes", { citationCount: 50, hasCode: true }), paper("Letters")],
+    aggregateScore: 68,
+    disagreement: "They disagree on X.",
+    failedCount: 1,
+  });
+  assert.match(user, /^# Researcher$/m);
+  assert.match(user, /^Aggregate score: 68/m);
+  assert.match(user, /could not be reviewed: 1/m);
+  assert.match(user, /^\[1\] Notes \(2020, \*Venue\*\) — 50 citations — code available$/m);
+  assert.match(user, /^\[2\] Letters \(2020, \*Venue\*\) — 10 citations$/m);
+  assert.match(user, /^\s+Score: 67 \(model spread 4\); per model: model-a 69, model-b 65$/m);
+  assert.match(user, /^\s+Summary: summary of Notes$/m);
+  assert.ok(user.includes("They disagree on X."));
 });
 
 // ---------------------------------------------------------------------------
 // JSON parsing / repair
 // ---------------------------------------------------------------------------
 
-function sampleOutput(overrides: Partial<AnalysisOutput> = {}): AnalysisOutput {
+function sampleOutput(overrides: Partial<PaperAnalysisOutput> = {}): PaperAnalysisOutput {
   return {
     scores: { rigor: 70, reproducibility: 60, novelty: 65, impact: 72, clarity: 68 },
     rationale: { rigor: "r", reproducibility: "p", novelty: "n", impact: "i", clarity: "c" },
-    summary: "Para one.\n\nPara two.",
-    sections: [
-      { title: "Methods and rigor", body: "m" },
-      { title: "Reproducibility", body: "r" },
-      { title: "Field impact", body: "f" },
-    ],
+    summary: "One paragraph about the paper.",
     strengths: ["s"],
     concerns: ["c"],
     ...overrides,
   };
 }
+
+const SAMPLE_SYNTHESIS = {
+  summary: "Para one.\n\nPara two.",
+  sections: [
+    { title: "Methods and rigor", body: "m" },
+    { title: "Reproducibility", body: "r" },
+    { title: "Field impact", body: "f" },
+  ],
+  disagreement: "They disagree on novelty of [1].",
+};
 
 test("extractJson strips fences and surrounding prose", () => {
   assert.equal(extractJson('Sure!\n```json\n{"a":1}\n```\nDone.'), '{"a":1}');
@@ -183,9 +238,17 @@ test("parseAnalysis validates against the zod schema", () => {
   assert.throws(() => parseAnalysis(JSON.stringify({ ...sampleOutput(), scores: { rigor: 101 } })), /scores\.rigor|Output does not match schema/);
   assert.throws(() => parseAnalysis("{ not json }"), /Invalid JSON/);
   // string scores are coerced, defaults applied
-  const coerced = analysisOutputSchema.parse({ ...sampleOutput(), scores: { rigor: "70", reproducibility: "60", novelty: "65", impact: "72", clarity: "68" }, strengths: undefined });
+  const coerced = paperAnalysisSchema.parse({ ...sampleOutput(), scores: { rigor: "70", reproducibility: "60", novelty: "65", impact: "72", clarity: "68" }, strengths: undefined });
   assert.equal(coerced.scores.rigor, 70);
   assert.deepEqual(coerced.strengths, []);
+});
+
+test("parseSynthesis validates the synthesis contract", () => {
+  const good = parseSynthesis(JSON.stringify(SAMPLE_SYNTHESIS));
+  assert.equal(good.sections.length, 3);
+  assert.equal(good.disagreement, "They disagree on novelty of [1].");
+  assert.equal(parseSynthesis(JSON.stringify({ ...SAMPLE_SYNTHESIS, disagreement: undefined })).disagreement, "");
+  assert.throws(() => parseSynthesis(JSON.stringify({ summary: "x", sections: [] })), /sections/);
 });
 
 test("completeAnalysis retries once with a repair request", async () => {
@@ -205,34 +268,48 @@ test("completeAnalysis retries once with a repair request", async () => {
 
   const alwaysBad = { id: "bad", async complete() { return "nope"; } };
   await assert.rejects(() => completeAnalysis(alwaysBad, "s", "u"), LlmOutputError);
+  const synth = { id: "synth", async complete() { return JSON.stringify(SAMPLE_SYNTHESIS); } };
+  assert.equal((await completeSynthesis(synth, "s", "u")).sections[2].title, "Field impact");
 });
 
 // ---------------------------------------------------------------------------
 // Mock provider
 // ---------------------------------------------------------------------------
 
-const USER = buildUserMessage(
-  { name: "Noor El-Sayed", affiliation: null, country: null, activeFrom: null, activeTo: null, topics: [] },
-  [
-    { title: "A", year: 2020, venue: null, abstract: null, hasCode: false, doi: null },
-    { title: "B", year: 2021, venue: null, abstract: null, hasCode: true, doi: null },
-    { title: "C", year: 2022, venue: null, abstract: null, hasCode: false, doi: null },
-  ],
-  "Computational Biology",
-);
+const NOOR = { name: "Noor El-Sayed", affiliation: null, country: null, activeFrom: null, activeTo: null, topics: [] };
+const PAPER_A = buildPaperMessage(NOOR, { title: "A", year: 2020, venue: null, abstract: null, hasCode: false, doi: null }, "Computational Biology");
+const PAPER_B = buildPaperMessage(NOOR, { title: "B", year: 2021, venue: "V", abstract: "We release the code.", hasCode: true, doi: null }, "Computational Biology");
 
-test("mock provider is deterministic per (name, id) and differs across ids", async () => {
-  const a1 = parseAnalysis(await createMockProvider("model-a").complete("", USER));
-  const a2 = parseAnalysis(await createMockProvider("model-a").complete("", USER));
-  const b = parseAnalysis(await createMockProvider("model-b").complete("", USER));
+test("mock provider is deterministic per (title, id), differs across ids and papers", async () => {
+  const a1 = parseAnalysis(await createMockProvider("model-a").complete("", PAPER_A));
+  const a2 = parseAnalysis(await createMockProvider("model-a").complete("", PAPER_A));
+  const b = parseAnalysis(await createMockProvider("model-b").complete("", PAPER_A));
+  const other = parseAnalysis(await createMockProvider("model-a").complete("", PAPER_B));
   assert.deepEqual(a1, a2);
   assert.notDeepEqual(a1.scores, b.scores);
-  assert.equal(a1.publicationScores?.length, 3);
-  assert.equal(a1.sections.length, 3);
-  assert.ok(a1.summary.includes("Noor El-Sayed"));
-  assert.ok(/\[\d\]/.test(a1.summary));
-  const direct = generateMockOutput("Noor El-Sayed::model-a", USER);
+  assert.notDeepEqual(a1.scores, other.scores);
+  assert.ok(a1.summary.includes('"A"'));
+  assert.ok(a1.strengths.length >= 1 && a1.concerns.length >= 1);
+  assert.ok(other.strengths.includes("Public code accompanies the paper"));
+  const direct = generateMockPaperOutput("A::model-a", PAPER_A);
   assert.deepEqual(direct, a1);
+});
+
+test("mock provider answers the synthesis message with sections and the disagreement", async () => {
+  const user = buildSynthesisMessage({
+    researcher: NOOR,
+    fieldName: "Computational Biology",
+    papers: [paper("A"), paper("B")],
+    aggregateScore: 67,
+    disagreement: "The models disagree most on **novelty** of [1].",
+  });
+  const out = parseSynthesis(await createMockProvider("model-a").complete("", user));
+  assert.equal(out.sections.length, 3);
+  assert.equal(out.sections[0].title, "Methods and rigor");
+  assert.ok(out.summary.includes("Noor El-Sayed"));
+  assert.ok(/\[\d\]/.test(out.summary));
+  assert.equal(out.disagreement, "The models disagree most on **novelty** of [1].");
+  assert.deepEqual(generateMockSynthesis("Noor El-Sayed::model-a", user), out);
 });
 
 test("buildProviders picks mocks when no keys, explicit list otherwise", () => {
@@ -245,50 +322,72 @@ test("buildProviders picks mocks when no keys, explicit list otherwise", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Merge / disagreement
+// Merge / disagreement / concurrency
 // ---------------------------------------------------------------------------
 
-function result(model: string, scores: Partial<AnalysisOutput["scores"]>, rationale: Partial<AnalysisOutput["rationale"]> = {}): ModelResult {
+function result(model: string, scores: Partial<PaperAnalysisOutput["scores"]>, rationale: Partial<PaperAnalysisOutput["rationale"]> = {}): ModelResult {
   const output = sampleOutput({
     scores: { ...sampleOutput().scores, ...scores },
     rationale: { ...sampleOutput().rationale, ...rationale },
     summary: `summary by ${model}`,
-    sections: sampleOutput().sections.map((s) => ({ ...s, body: `${s.body} by ${model}` })),
-    publicationScores: model === "model-c" ? undefined : [80, 60],
+    strengths: [`strength by ${model}`],
   });
   return { model, output, weighted: 0 };
 }
 
-test("describeDisagreement names the widest criterion and the outlier", () => {
-  const results = [
-    result("model-a", { novelty: 80 }, { novelty: "very new" }),
-    result("model-b", { novelty: 78 }),
-    result("model-c", { novelty: 40 }, { novelty: "seen before" }),
-  ];
-  const text = describeDisagreement(results)!;
-  assert.ok(text.includes("**novelty**"));
-  assert.ok(text.includes("spread 40"));
-  assert.ok(text.includes("**model-c**"));
-  assert.ok(text.includes("lower"));
-  assert.ok(text.includes("seen before"));
-  assert.equal(describeDisagreement([results[0]]), null);
-  assert.match(describeDisagreement([result("a", {}), result("b", {})])!, /agree on every criterion/);
-});
-
-test("mergeResults uses the median model's text and averages publication scores", () => {
+test("mergePaperResults keeps every model's scores and the median model's prose", () => {
   const results = [
     result("model-a", { rigor: 90, reproducibility: 90, novelty: 90, impact: 90, clarity: 90 }),
     result("model-b", { rigor: 50, reproducibility: 50, novelty: 50, impact: 50, clarity: 50 }),
     result("model-c", { rigor: 70, reproducibility: 70, novelty: 70, impact: 70, clarity: 70 }),
-  ].map((r) => ({ ...r, weighted: r.output.scores.rigor }));
+  ];
   assert.equal(medianIndex([90, 50, 70]), 2);
-  const merged = mergeResults(results, DEFAULT_WEIGHTS, 2);
+  const merged = mergePaperResults(results, DEFAULT_WEIGHTS);
   assert.equal(merged.summary, "summary by model-c");
-  assert.equal(merged.sections[0].body, "m by model-c");
+  assert.deepEqual(merged.strengths, ["strength by model-c"]);
   assert.equal(merged.modelScores.length, 3);
   assert.equal(merged.modelScores[0].weighted, 90);
-  assert.deepEqual(merged.modelScores[0].rationale?.strengths, ["s"]);
-  assert.deepEqual(merged.publicationScores, [80, 60]);
-  assert.deepEqual(mergePublicationScores([result("model-c", {})], 2), [null, null]);
-  assert.ok(merged.disagreement);
+  assert.equal(merged.modelScores[0].rationale?.rigor, "r");
+  assert.equal(merged.score, 70);
+  assert.equal(merged.spread, 40);
+  assert.throws(() => mergePaperResults([], DEFAULT_WEIGHTS));
+});
+
+test("describeDisagreement names the paper, the widest criterion and the outlier", () => {
+  const scoresOf = (novelty: number) => ({ rigor: 70, reproducibility: 60, novelty, impact: 72, clarity: 68 });
+  const papers = [
+    paper("Calm paper"),
+    paper("Contested paper", {
+      modelScores: [
+        { model: "model-a", weighted: 70, scores: scoresOf(80), rationale: { novelty: "very new" } },
+        { model: "model-b", weighted: 70, scores: scoresOf(78), rationale: {} },
+        { model: "model-c", weighted: 60, scores: scoresOf(40), rationale: { novelty: "seen before" } },
+      ],
+    }),
+  ];
+  assert.deepEqual(widestDisagreement(papers), { paperIndex: 1, criterion: "novelty", spread: 40 });
+  const text = describeDisagreement(papers)!;
+  assert.ok(text.includes("**novelty**"));
+  assert.ok(text.includes('[2] "Contested paper"'));
+  assert.ok(text.includes("spread 40"));
+  assert.ok(text.includes("**model-c**"));
+  assert.ok(text.includes("lower"));
+  assert.ok(text.includes("seen before"));
+  assert.equal(describeDisagreement([paper("Solo", { modelScores: [paper("x").modelScores[0]] })]), null);
+  assert.match(describeDisagreement([paper("Agreed")])!, /agree on every criterion/);
+});
+
+test("mapLimit bounds concurrency and keeps the input order", async () => {
+  let running = 0;
+  let peak = 0;
+  const out = await mapLimit([1, 2, 3, 4, 5], 2, async (n) => {
+    running++;
+    peak = Math.max(peak, running);
+    await new Promise((r) => setTimeout(r, 5));
+    running--;
+    return n * 10;
+  });
+  assert.deepEqual(out, [10, 20, 30, 40, 50]);
+  assert.equal(peak, 2);
+  assert.deepEqual(await mapLimit([], 3, async () => 1), []);
 });

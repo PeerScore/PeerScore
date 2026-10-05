@@ -74,6 +74,33 @@ export function spread(modelWeightedScores: readonly number[]): number | null {
   return Math.max(...modelWeightedScores) - Math.min(...modelWeightedScores);
 }
 
+/** Weight of one publication in the researcher aggregate: 1 + ln(1 + citations). */
+export function citationWeight(citationCount: number): number {
+  const c = Number(citationCount);
+  return 1 + Math.log1p(Number.isFinite(c) && c > 0 ? c : 0);
+}
+
+/**
+ * Researcher score: citation-weighted mean of the current publication scores,
+ * rounded. Each publication weighs `1 + ln(1 + citationCount)`, so uncited
+ * papers still count (weight 1) while heavily cited ones count more, slowly.
+ * Items without a score are ignored; null when nothing is scored.
+ */
+export function aggregateResearcherScore(
+  items: readonly { score: number | null | undefined; citationCount: number }[],
+): number | null {
+  let total = 0;
+  let weightSum = 0;
+  for (const item of items) {
+    if (item.score === null || item.score === undefined || !Number.isFinite(item.score)) continue;
+    const w = citationWeight(item.citationCount);
+    total += w * item.score;
+    weightSum += w;
+  }
+  if (weightSum === 0) return null;
+  return clamp(Math.round(total / weightSum), 0, 100);
+}
+
 /** Score band used by the design tokens: high ≥ 70, mid 50–69, low < 50. */
 export function scoreBand(score: number): ScoreBand {
   if (score >= 70) return "high";

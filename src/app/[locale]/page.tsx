@@ -30,7 +30,7 @@ export default async function HomePage() {
         </div>
         <div id="stats" className="grid w-full scroll-mt-6 grid-cols-2 gap-3 sm:w-auto sm:grid-cols-4">
           <StatTile label={t("statResearchers")} value={n(s.researchers)} />
-          <StatTile label={t("statPapers")} value={n(s.publications)} />
+          <StatTile label={t("statPapers")} value={n(s.publicationsAnalyzed)} />
           <StatTile label={t("statFields")} value={n(s.fields)} />
           <StatTile label={t("statQueue")} value={n(s.queued)} tone="amber" />
         </div>
@@ -53,7 +53,7 @@ export default async function HomePage() {
                   <div className="mt-2.5 flex flex-wrap items-center gap-2">
                     <Chip href={`/researchers?field=${feat.field.slug}`}>{feat.field.name}</Chip>
                     <span className="font-mono text-[12px] text-muted">
-                      {t("papersModels", { papers: feat.publicationCount, models: feat.modelScores.length })}
+                      {t("papersAnalyzedModels", { papers: feat.publicationsAnalyzed ?? 0, models: feat.models.length })}
                     </span>
                   </div>
                 </div>

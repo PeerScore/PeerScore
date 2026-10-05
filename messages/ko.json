@@ -55,7 +55,7 @@
     "statFields": "분야",
     "statQueue": "대기 중",
     "featured": "주목할 분석",
-    "papersModels": "{papers, plural, other {논문 #편}} · {models, plural, other {모델 #개}}",
+    "papersAnalyzedModels": "{papers, plural, other {논문 #편}} 분석 · {models, plural, other {모델 #개}}",
     "readAnalysis": "분석 읽기",
     "noAnalysis": "아직 게시된 분석이 없습니다. 대기열의 첫 번째 요청이 여기에 표시됩니다.",
     "recentlyPublished": "최근 게시",
@@ -65,10 +65,22 @@
     "allFields": "모든 분야",
     "howItWorks": "PeerScore 작동 방식",
     "steps": {
-      "1": { "title": "이름 제출", "body": "누구나 연구자를 제출할 수 있습니다. 입력란 하나, 계정 불필요 — 요청은 공개 대기열에 들어갑니다." },
-      "2": { "title": "논문 수집", "body": "워커가 공개 학술 기록에서 연구자를 식별하고 논문의 메타데이터와 초록을 내려받습니다." },
-      "3": { "title": "분야별 분석", "body": "여러 언어 모델이 해당 분야용 프롬프트로 논문을 읽고 다섯 가지 기준을 독립적으로 채점합니다." },
-      "4": { "title": "문서 게시", "body": "점수는 가중 합의로 집계되고, 모든 이견을 포함한 전체 보고서가 24–48시간 내에 게시됩니다." }
+      "1": {
+        "title": "이름 제출",
+        "body": "누구나 연구자를 제출할 수 있습니다. 입력란 하나, 계정 불필요 — 요청은 공개 대기열에 들어갑니다."
+      },
+      "2": {
+        "title": "논문 수집",
+        "body": "워커가 공개 학술 기록에서 연구자를 식별하고 논문의 메타데이터와 초록을 내려받습니다."
+      },
+      "3": {
+        "title": "분야별 분석",
+        "body": "여러 언어 모델이 해당 분야용 프롬프트로 논문을 읽고 다섯 가지 기준을 독립적으로 채점합니다."
+      },
+      "4": {
+        "title": "문서 게시",
+        "body": "점수는 가중 합의로 집계되고, 모든 이견을 포함한 전체 보고서가 24–48시간 내에 게시됩니다."
+      }
     },
     "reproducibleTitle": "모든 분석은 재현 가능합니다.",
     "reproducibleBody": "프롬프트는 버전 관리와 해시 처리가 되고, 모델 출력은 그대로 저장되며, 전체 파이프라인은 오픈소스입니다. 분석은 언어 모델이 생성하며 오류가 있을 수 있습니다 — 어떤 문서 페이지에서든 신고할 수 있습니다.",
@@ -108,6 +120,7 @@
     "thPubs": "논문 수",
     "thScore": "점수",
     "thAnalyzed": "분석일",
+    "analyzedCount": "{n}편 분석",
     "analyzing": "분석 중",
     "queuedEta": "대기 중 · 24–48시간",
     "pagination": "페이지 이동",
@@ -139,7 +152,7 @@
     "from": "열린 연구자 색인 PeerScore에서",
     "notice": "이 문서는 언어 모델이 논문 메타데이터와 초록을 바탕으로 작성했습니다. 오류가 있을 수 있으며 동료 심사가 아닙니다. 점수는 모델의 해석을 반영하며, 어떤 기관의 의견도 아닙니다.",
     "disagreeTitle": "모델 간 의견이 갈리는 지점",
-    "spreadPoints": "최고 모델과 최저 모델 사이의 점수 차는 <n>{spread}</n>점입니다.",
+    "spreadPoints": "최고 점수 논문과 최저 점수 논문 사이의 편차 <n>{spread}</n>점.",
     "categories": "분류",
     "published": "게시됨",
     "inQueue": "대기 중",
@@ -153,13 +166,15 @@
     "infoTopics": "주제",
     "infoLastRun": "마지막 실행",
     "ringLabel": "/ 100",
-    "infoStats": "편차 {spread} · 분야 중앙값 {median} · {models, plural, other {모델 #개}}",
+    "infoAggregate": "{n, plural, other {논문 #편}}의 인용 가중 평균 · 편차 {spread} · 분야 중앙값 {median}",
+    "infoModels": "논문당 {models, plural, other {모델 #개}}",
     "analyzing": "분석 중",
     "queued": "대기 중",
     "scoreWithin": "점수는 24–48시간 내 제공",
     "breakdownHint": "가중치는 분야별로 설정 · 각 행의 최저 모델 강조",
+    "breakdownNote": "{n, plural, other {논문 #편}} 평균",
     "thCriterion": "기준",
-    "thConsensus": "합의",
+    "thAverage": "평균",
     "criteria": {
       "rigor": "엄밀성",
       "reproducibility": "재현성",
@@ -174,9 +189,18 @@
     "thYear": "연도",
     "thTitle": "제목",
     "thVenue": "게재처",
+    "thCitations": "인용",
     "thCode": "코드",
     "thScore": "점수",
     "publicCode": "공개 코드",
+    "sortedByCitations": "인용순 정렬",
+    "paperSummary": "요약",
+    "paperStrengths": "강점",
+    "paperConcerns": "우려 사항",
+    "paperPerModel": "모델별",
+    "paperSpread": "모델 간 편차 {spread}",
+    "notAnalyzed": "미분석",
+    "showAnalysis": "분석 보기",
     "provPrompt": "프롬프트",
     "provSha": "sha {sha}",
     "provModels": "모델",
@@ -208,10 +232,26 @@
     "intro": "입력란 하나, 계정 불필요. 요청은 공개 대기열에 들어가고 분석이 끝나면 문서가 자동으로 게시됩니다.",
     "whatHappensNext": "다음 단계",
     "steps": {
-      "1": { "when": "수 분", "title": "대기열 등록", "body": "요청은 공개 ID와 대기열 순서와 함께 저장됩니다. 그 외 어떤 정보도 수집하지 않습니다." },
-      "2": { "when": "수 시간", "title": "논문 수집", "body": "워커가 공개 학술 기록에서 이름을 식별하고 메타데이터, 초록, 코드 링크를 내려받습니다." },
-      "3": { "when": "수 시간", "title": "분야별 분석", "body": "여러 언어 모델이 해당 분야용 프롬프트로 논문을 읽고 다섯 가지 기준을 독립적으로 채점합니다." },
-      "4": { "when": "24–48시간", "title": "문서 게시", "body": "점수가 집계되고, 보고서와 모든 이견이 게시되며, 페이지가 자동으로 공개됩니다." }
+      "1": {
+        "when": "수 분",
+        "title": "대기열 등록",
+        "body": "요청은 공개 ID와 대기열 순서와 함께 저장됩니다. 그 외 어떤 정보도 수집하지 않습니다."
+      },
+      "2": {
+        "when": "수 시간",
+        "title": "논문 수집",
+        "body": "워커가 공개 학술 기록에서 이름을 식별하고 메타데이터, 초록, 코드 링크를 내려받습니다."
+      },
+      "3": {
+        "when": "수 시간",
+        "title": "분야별 분석",
+        "body": "여러 언어 모델이 해당 분야용 프롬프트로 논문을 읽고 다섯 가지 기준을 독립적으로 채점합니다."
+      },
+      "4": {
+        "when": "24–48시간",
+        "title": "문서 게시",
+        "body": "점수가 집계되고, 보고서와 모든 이견이 게시되며, 페이지가 자동으로 공개됩니다."
+      }
     },
     "whoCanBeSubmitted": "제출 가능한 연구자",
     "eligible": {

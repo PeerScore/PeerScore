@@ -13,11 +13,11 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const params = parseResearcherListParams(searchParams);
   const { items } = await listResearchers({ ...params, pageSize: params.pageSize ?? 100 });
-  const header = ["name", "slug", "affiliation", "country", "field", "status", "score", "spread", "publications", "open_code", "published_at"];
+  const header = ["name", "slug", "affiliation", "country", "field", "status", "score", "spread", "publications", "publications_analyzed", "open_code", "published_at"];
   const lines = [header.join(",")];
   for (const r of items) {
     lines.push(
-      [r.name, r.slug, r.affiliation, r.country, r.field.name, r.status, r.score, r.spread, r.publicationCount, r.openCodeCount, r.publishedAt]
+      [r.name, r.slug, r.affiliation, r.country, r.field.name, r.status, r.score, r.spread, r.publicationCount, r.publicationsAnalyzed, r.openCodeCount, r.publishedAt]
         .map(csvCell)
         .join(","),
     );

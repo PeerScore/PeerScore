@@ -55,7 +55,7 @@
     "statFields": "Dziedziny",
     "statQueue": "W kolejce",
     "featured": "Wyróżniona analiza",
-    "papersModels": "{papers, plural, one {# praca} few {# prace} many {# prac} other {# pracy}} · {models, plural, one {# model} few {# modele} many {# modeli} other {# modelu}}",
+    "papersAnalyzedModels": "przeanalizowano: {papers, plural, one {# praca} few {# prace} many {# prac} other {# pracy}} · {models, plural, one {# model} few {# modele} many {# modeli} other {# modelu}}",
     "readAnalysis": "Przeczytaj analizę",
     "noAnalysis": "Nie opublikowano jeszcze żadnej analizy. Pierwsze zgłoszenie z kolejki pojawi się tutaj.",
     "recentlyPublished": "Ostatnio opublikowane",
@@ -65,10 +65,22 @@
     "allFields": "Wszystkie dziedziny",
     "howItWorks": "Jak działa PeerScore",
     "steps": {
-      "1": { "title": "Zgłoś nazwisko", "body": "Każdy może zgłosić naukowca. Jedno pole, bez konta — zgłoszenie trafia do publicznej kolejki." },
-      "2": { "title": "Zbieranie publikacji", "body": "Worker identyfikuje naukowca w otwartych bazach naukowych i pobiera metadane oraz abstrakty publikacji." },
-      "3": { "title": "Analiza dla danej dziedziny", "body": "Kilka modeli językowych czyta publikacje z promptem napisanym dla dziedziny i niezależnie ocenia pięć kryteriów." },
-      "4": { "title": "Artykuł zostaje opublikowany", "body": "Wyniki są łączone w ważony konsensus, a pełne omówienie, wraz z każdą rozbieżnością, jest publikowane w ciągu 24–48 h." }
+      "1": {
+        "title": "Zgłoś nazwisko",
+        "body": "Każdy może zgłosić naukowca. Jedno pole, bez konta — zgłoszenie trafia do publicznej kolejki."
+      },
+      "2": {
+        "title": "Zbieranie publikacji",
+        "body": "Worker identyfikuje naukowca w otwartych bazach naukowych i pobiera metadane oraz abstrakty publikacji."
+      },
+      "3": {
+        "title": "Analiza dla danej dziedziny",
+        "body": "Kilka modeli językowych czyta publikacje z promptem napisanym dla dziedziny i niezależnie ocenia pięć kryteriów."
+      },
+      "4": {
+        "title": "Artykuł zostaje opublikowany",
+        "body": "Wyniki są łączone w ważony konsensus, a pełne omówienie, wraz z każdą rozbieżnością, jest publikowane w ciągu 24–48 h."
+      }
     },
     "reproducibleTitle": "Każda analiza jest odtwarzalna.",
     "reproducibleBody": "Prompty są wersjonowane i haszowane, odpowiedzi modeli są zapisywane dosłownie, a cały proces jest otwartoźródłowy. Analizy są generowane przez modele językowe i mogą zawierać błędy — zgłoś błąd z dowolnej strony artykułu.",
@@ -108,6 +120,7 @@
     "thPubs": "Publ.",
     "thScore": "Wynik",
     "thAnalyzed": "Analiza",
+    "analyzedCount": "przeanalizowano {n}",
     "analyzing": "w trakcie analizy",
     "queuedEta": "w kolejce · 24–48 h",
     "pagination": "Stronicowanie",
@@ -139,7 +152,7 @@
     "from": "Z PeerScore, otwartego indeksu naukowców",
     "notice": "Ten artykuł został napisany przez modele językowe na podstawie metadanych i abstraktów publikacji. Może zawierać błędy i nie jest recenzją naukową. Wyniki odzwierciedlają odczyt modeli, a nie opinię żadnej instytucji.",
     "disagreeTitle": "Gdzie modele się nie zgadzają",
-    "spreadPoints": "Rozpiętość <n>{spread}</n> punktów między najwyższym a najniższym modelem.",
+    "spreadPoints": "Rozpiętość <n>{spread}</n> punktów między najwyżej a najniżej ocenioną publikacją.",
     "categories": "Kategorie",
     "published": "Opublikowany",
     "inQueue": "W kolejce",
@@ -153,13 +166,15 @@
     "infoTopics": "Tematy",
     "infoLastRun": "Ostatnie uruchomienie",
     "ringLabel": "/ 100",
-    "infoStats": "rozpiętość {spread} · mediana dziedziny {median} · {models, plural, one {# model} few {# modele} many {# modeli} other {# modelu}}",
+    "infoAggregate": "średnia ważona cytowaniami · {n, plural, one {# praca} few {# prace} many {# prac} other {# pracy}} · rozpiętość {spread} · mediana dziedziny {median}",
+    "infoModels": "{models, plural, one {# model} few {# modele} many {# modeli} other {# modelu}} na publikację",
     "analyzing": "analiza",
     "queued": "w kolejce",
     "scoreWithin": "wynik dostępny w ciągu 24–48 h",
     "breakdownHint": "Wagi ustalane są dla każdej dziedziny · najniższy model w wierszu jest wyróżniony",
+    "breakdownNote": "uśrednione · {n, plural, one {# praca} few {# prace} many {# prac} other {# pracy}}",
     "thCriterion": "Kryterium",
-    "thConsensus": "Konsensus",
+    "thAverage": "Średnia",
     "criteria": {
       "rigor": "Rzetelność",
       "reproducibility": "Odtwarzalność",
@@ -174,9 +189,18 @@
     "thYear": "Rok",
     "thTitle": "Tytuł",
     "thVenue": "Miejsce publikacji",
+    "thCitations": "Cytowania",
     "thCode": "Kod",
     "thScore": "Wynik",
     "publicCode": "Publiczny kod",
+    "sortedByCitations": "posortowane według cytowań",
+    "paperSummary": "Streszczenie",
+    "paperStrengths": "Mocne strony",
+    "paperConcerns": "Zastrzeżenia",
+    "paperPerModel": "Według modelu",
+    "paperSpread": "rozpiętość między modelami {spread}",
+    "notAnalyzed": "nieprzeanalizowana",
+    "showAnalysis": "Pokaż analizę",
     "provPrompt": "Prompt",
     "provSha": "sha {sha}",
     "provModels": "Modele",
@@ -208,10 +232,26 @@
     "intro": "Jedno pole, bez konta. Zgłoszenie trafia do publicznej kolejki, a artykuł jest publikowany automatycznie po zakończeniu analizy.",
     "whatHappensNext": "Co dalej",
     "steps": {
-      "1": { "when": "minuty", "title": "W kolejce", "body": "Twoje zgłoszenie jest zapisywane z publicznym identyfikatorem i pozycją w kolejce. Nie zbieramy o Tobie nic więcej." },
-      "2": { "when": "godziny", "title": "Zebrano publikacje", "body": "Worker identyfikuje nazwisko w otwartych bazach naukowych i pobiera metadane, abstrakty oraz linki do kodu." },
-      "3": { "when": "godziny", "title": "Analiza dla danej dziedziny", "body": "Kilka modeli językowych czyta publikacje z promptem napisanym dla dziedziny i niezależnie ocenia pięć kryteriów." },
-      "4": { "when": "24–48 h", "title": "Artykuł opublikowany", "body": "Wyniki są łączone, omówienie i każda rozbieżność są publikowane, a strona pojawia się automatycznie." }
+      "1": {
+        "when": "minuty",
+        "title": "W kolejce",
+        "body": "Twoje zgłoszenie jest zapisywane z publicznym identyfikatorem i pozycją w kolejce. Nie zbieramy o Tobie nic więcej."
+      },
+      "2": {
+        "when": "godziny",
+        "title": "Zebrano publikacje",
+        "body": "Worker identyfikuje nazwisko w otwartych bazach naukowych i pobiera metadane, abstrakty oraz linki do kodu."
+      },
+      "3": {
+        "when": "godziny",
+        "title": "Analiza dla danej dziedziny",
+        "body": "Kilka modeli językowych czyta publikacje z promptem napisanym dla dziedziny i niezależnie ocenia pięć kryteriów."
+      },
+      "4": {
+        "when": "24–48 h",
+        "title": "Artykuł opublikowany",
+        "body": "Wyniki są łączone, omówienie i każda rozbieżność są publikowane, a strona pojawia się automatycznie."
+      }
     },
     "whoCanBeSubmitted": "Kogo można zgłosić",
     "eligible": {

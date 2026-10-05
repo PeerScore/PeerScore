@@ -64,11 +64,16 @@ export interface ResearcherSummary {
   country: string | null;
   field: FieldRef;
   status: ResearcherStatus;
-  /** Weighted consensus 0–100 of the current run, null when not published. */
+  /**
+   * Aggregate 0–100 of the current run: citation-weighted mean of the
+   * publication scores. Null when not published.
+   */
   score: number | null;
   band: ScoreBand | null;
-  /** max − min of the model weighted scores of the current run. */
+  /** max − min of the publication scores of the current run. */
   spread: number | null;
+  /** Number of publications scored by the current run, null when not published. */
+  publicationsAnalyzed: number | null;
   publicationCount: number;
   openCodeCount: number;
   topics: string[];
@@ -77,11 +82,13 @@ export interface ResearcherSummary {
 }
 
 export interface FeaturedResearcher extends ResearcherSummary {
-  /** Markdown summary of the current run (first paragraph is a good teaser). */
+  /** Markdown synthesis of the current run (first paragraph is a good teaser). */
   summary: string | null;
-  modelScores: ModelScoreSummary[];
+  /** Provider ids that took part in the current run. */
+  models: string[];
 }
 
+/** One model's reading of one publication. */
 export interface ModelScoreSummary extends CriterionScores {
   model: string;
   weighted: number;
@@ -89,28 +96,60 @@ export interface ModelScoreSummary extends CriterionScores {
   rationale: Record<string, unknown>;
 }
 
+/** One model's criterion scores averaged over the publications it read. */
+export interface ModelAverage extends CriterionScores {
+  model: string;
+  weighted: number;
+  /** Number of publications this model scored. */
+  publications: number;
+}
+
 export interface AnalysisSection {
   title: string;
   body: string; // markdown
 }
 
+/** Researcher-level batch + synthesis. */
 export interface AnalysisRunSummary {
   id: string;
   status: RunStatus;
   promptKey: string;
   promptVersion: string;
   promptSha: string;
+  /** Provider ids that took part in the run. */
+  models: string[];
   startedAt: string;
   finishedAt: string | null;
   durationSec: number | null;
+  /** Citation-weighted mean of the publication scores (see scoring.aggregateResearcherScore). */
   score: number | null;
   band: ScoreBand | null;
+  /** max − min of the publication scores. */
   spread: number | null;
   fieldMedian: number | null;
-  summary: string | null; // markdown
+  publicationsAnalyzed: number;
+  summary: string | null; // markdown synthesis
   disagreement: string | null; // markdown
   sections: AnalysisSection[];
+  /** Per-model criterion averages across the publications of this run (A→Z by model). */
+  modelAverages: ModelAverage[];
+}
+
+/** The per-publication analysis of the current run. */
+export interface PublicationAnalysisSummary {
+  id: string;
+  runId: string;
+  status: RunStatus;
+  /** Consensus 0–100: rounded mean of the model weighted scores. */
+  score: number | null;
+  band: ScoreBand | null;
+  /** max − min of the model weighted scores. */
+  spread: number | null;
+  summary: string | null; // markdown, one short paragraph
+  strengths: string[];
+  concerns: string[];
   modelScores: ModelScoreSummary[];
+  finishedAt: string | null;
 }
 
 export interface ResearcherPublication {
@@ -122,7 +161,11 @@ export interface ResearcherPublication {
   url: string | null;
   abstract: string | null;
   hasCode: boolean;
-  score: number | null;
+  /** OpenAlex cited_by_count at fetch time. */
+  citationCount: number;
+  openalexId: string | null;
+  /** Analysis from the current run, null when not analysed (or failed). */
+  analysis: PublicationAnalysisSummary | null;
 }
 
 /** Everything the article page (/researchers/[slug]) and the JSON export need. */
@@ -177,7 +220,10 @@ export interface SiteStats {
   researchers: number;
   published: number;
   fields: number;
+  /** Publications in the index. */
   publications: number;
+  /** Publications scored by a live run. */
+  publicationsAnalyzed: number;
   /** Submissions still in the pipeline (not PUBLISHED / FAILED). */
   queued: number;
   /** Median of all current scores, null when nothing is published. */

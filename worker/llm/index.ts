@@ -10,8 +10,8 @@ import { createOpenAiProvider } from "./openai";
 import type { LlmProvider } from "./types";
 
 export type { LlmProvider } from "./types";
-export { completeAnalysis, parseAnalysis, extractJson, LlmOutputError } from "./parse";
-export { createMockProvider, generateMockOutput } from "./mock";
+export { completeAnalysis, completeSynthesis, completeJson, parseAnalysis, parseSynthesis, parseJsonOutput, extractJson, LlmOutputError } from "./parse";
+export { createMockProvider, generateMockPaperOutput, generateMockSynthesis } from "./mock";
 
 export const MOCK_IDS = ["model-a", "model-b", "model-c"] as const;
 

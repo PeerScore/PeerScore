@@ -170,3 +170,8 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* Rotate the chevron of an open <details> row (publication analyses). */
+details[open] > summary .details-marker {
+  transform: rotate(90deg);
+}

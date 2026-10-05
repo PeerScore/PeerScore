@@ -1,8 +1,9 @@
-// Deterministic mock provider: scores and text are derived from a seed
-// (researcher name + provider id) so runs are reproducible without API keys.
+// Deterministic mock provider: per-publication scores and text are derived
+// from a seed (paper title + provider id), the synthesis from the researcher
+// name, so runs are reproducible without API keys.
 
 import { createHash } from "node:crypto";
-import type { AnalysisOutput } from "../schema";
+import type { PaperAnalysisOutput, SynthesisOutput } from "../schema";
 import { CRITERIA, SECTION_TITLES } from "../schema";
 import type { LlmProvider } from "./types";
 
@@ -19,68 +20,113 @@ export function seededRandom(seed: string): () => number {
   };
 }
 
-/** Pull "Name: …", "Field: …" and the publication list back out of the user message. */
-export function parseUserMessage(user: string): { name: string; field: string; titles: string[] } {
+/** Is this user message a per-publication request (vs. the synthesis)? */
+export function isPaperMessage(user: string): boolean {
+  return /^# Publication\s*$/m.test(user);
+}
+
+/** Pull the paper fields back out of a per-publication user message. */
+export function parsePaperMessage(user: string): { title: string; year: string; venue: string; hasCode: boolean; hasAbstract: boolean; name: string; field: string } {
+  const get = (key: string) => user.match(new RegExp(`^${key}:\\s*(.+)$`, "m"))?.[1]?.trim();
+  const abstract = get("Abstract") ?? "";
+  return {
+    title: get("Title") ?? "Untitled",
+    year: get("Year") ?? "n.d.",
+    venue: get("Venue") ?? "not available",
+    hasCode: /^Code available:\s*yes/m.test(user),
+    hasAbstract: abstract.length > 0 && !/^not available/i.test(abstract),
+    name: get("Name") ?? "The researcher",
+    field: get("Field") ?? "their field",
+  };
+}
+
+/** Pull "Name: …", "Field: …" and the numbered paper list back out of a synthesis message. */
+export function parseSynthesisMessage(user: string): { name: string; field: string; titles: string[]; scores: number[] } {
   const name = user.match(/^Name:\s*(.+)$/m)?.[1]?.trim() ?? "The researcher";
   const field = user.match(/^Field:\s*(.+)$/m)?.[1]?.trim() ?? "their field";
   const titles = [...user.matchAll(/^\[(\d+)\]\s+(.+?)\s+\(\d{4}/gm)].map((m) => m[2]);
-  return { name, field, titles };
+  const scores = [...user.matchAll(/^\s+Score:\s*(\d+)/gm)].map((m) => Number(m[1]));
+  return { name, field, titles, scores };
 }
 
 const ADJECTIVES = ["thorough", "careful", "ambitious", "incremental", "well-documented", "uneven", "methodical", "exploratory"];
 
-export function generateMockOutput(seed: string, user: string): AnalysisOutput {
+/** Deterministic review of ONE paper; `seed` is "<title>::<model id>". */
+export function generateMockPaperOutput(seed: string, user: string): PaperAnalysisOutput {
   const rnd = seededRandom(seed);
-  const { name, field, titles } = parseUserMessage(user);
+  const { title, year, venue, hasCode, hasAbstract, field } = parsePaperMessage(user);
   const base = 45 + Math.floor(rnd() * 40); // 45–84
   const scores = Object.fromEntries(
-    CRITERIA.map((c) => [c, Math.max(0, Math.min(100, base + Math.floor(rnd() * 25) - 12))]),
-  ) as AnalysisOutput["scores"];
+    CRITERIA.map((c) => {
+      let v = base + Math.floor(rnd() * 25) - 12;
+      if (c === "reproducibility") v += hasCode ? 6 : -6;
+      return [c, Math.max(0, Math.min(100, v))];
+    }),
+  ) as PaperAnalysisOutput["scores"];
   const pick = () => ADJECTIVES[Math.floor(rnd() * ADJECTIVES.length)];
-  const cite = (i: number) => `[${((i + Math.floor(rnd() * Math.max(1, titles.length))) % Math.max(1, titles.length)) + 1}]`;
-  const surname = name.split(/\s+/).pop() ?? name;
-  const n = titles.length;
+  const model = seed.split("::").pop() ?? "mock";
 
   const rationale = Object.fromEntries(
     CRITERIA.map((c) => [
       c,
-      `${c[0].toUpperCase()}${c.slice(1)} is ${pick()} across the ${n} listed works; ${cite(0)} and ${cite(1)} are the clearest examples, while ${cite(2)} is weaker on this point.`,
+      `${c[0].toUpperCase()}${c.slice(1)} of "${title}" is ${pick()} by the standards of ${field.toLowerCase()}` +
+        (c === "reproducibility" ? (hasCode ? "; code is available." : "; no code or data release was found.") : hasAbstract ? "." : "; the abstract is missing, so the score is conservative."),
     ]),
-  ) as AnalysisOutput["rationale"];
+  ) as PaperAnalysisOutput["rationale"];
 
   const summary =
-    `${name} is a researcher in ${field.toLowerCase()} whose output over ${n} indexed publications centres on ${titles[0] ? `work such as "${titles[0]}" ${cite(0)}` : "a compact body of work"}. ` +
+    `"${title}" (${venue}, ${year}) is a ${pick()} contribution to ${field.toLowerCase()}. ` +
+    `The approach is ${pick()} in design and ${pick()} in execution; methods are ${scores.rigor >= 65 ? "generally sound" : "sometimes under-specified"}, ` +
+    `artefacts are ${hasCode ? "available" : "not released"}, and the claimed contribution is ${scores.novelty >= 65 ? "clearly positioned against prior work" : "largely incremental"}. ` +
+    `This review was generated by the mock provider "${model}" for development purposes.`;
+
+  const framing = pick();
+  return {
+    scores,
+    rationale,
+    summary,
+    strengths: [`${framing[0].toUpperCase()}${framing.slice(1)} problem framing`, hasCode ? "Public code accompanies the paper" : "Clear statement of the research question"],
+    concerns: [hasAbstract ? "Limited discussion of failure modes" : "No abstract available for review", ...(hasCode ? [] : ["No released artefacts"])],
+  };
+}
+
+/** Deterministic researcher-level synthesis from the per-paper reviews in the message. */
+export function generateMockSynthesis(seed: string, user: string): SynthesisOutput {
+  const rnd = seededRandom(seed);
+  const { name, field, titles, scores } = parseSynthesisMessage(user);
+  const n = Math.max(1, titles.length);
+  const pick = () => ADJECTIVES[Math.floor(rnd() * ADJECTIVES.length)];
+  const cite = (i: number) => `[${((i + Math.floor(rnd() * n)) % n) + 1}]`;
+  const surname = name.split(/\s+/).pop() ?? name;
+  const mean = scores.length ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 50;
+  const model = seed.split("::").pop() ?? "mock";
+
+  const summary =
+    `${name} is a researcher in ${field.toLowerCase()} whose output over ${titles.length} reviewed publications centres on ${titles[0] ? `work such as "${titles[0]}" ${cite(0)}` : "a compact body of work"}. ` +
     `The programme is ${pick()} in design and ${pick()} in execution, with the most cited contributions ${cite(0)} and ${cite(1)} setting the direction for later studies.\n\n` +
-    `Judged by the standards of ${field.toLowerCase()}, ${surname}'s work is ${pick()}: methods are ${scores.rigor >= 65 ? "generally sound" : "sometimes under-specified"}, ` +
-    `artefacts are ${scores.reproducibility >= 65 ? "largely available" : "only partially available"}, and the influence of ${cite(2)} on subsequent work is ${scores.impact >= 65 ? "clear" : "still limited"}.`;
+    `Judged by the standards of ${field.toLowerCase()}, ${surname}'s work is ${pick()}: methods are ${mean >= 65 ? "generally sound" : "sometimes under-specified"}, ` +
+    `artefacts are ${mean >= 65 ? "largely available" : "only partially available"}, and the influence of ${cite(2)} on subsequent work is ${mean >= 65 ? "clear" : "still limited"}.`;
 
   const sections = SECTION_TITLES.map((title, i) => ({
     title,
     body:
       `${title} in ${surname}'s publications is ${pick()}. ${cite(i)} illustrates the typical approach, while ${cite(i + 1)} shows the main limitation.\n\n` +
-      `A ${pick()} reading of ${cite(i + 2)} suggests the pattern holds across the period covered by the list. This assessment was generated by the mock provider "${seed.split("::")[1] ?? "mock"}" for development purposes.`,
+      `A ${pick()} reading of the per-paper reviews, in particular ${cite(i + 2)}, suggests the pattern holds across the period covered. This synthesis was generated by the mock provider "${model}" for development purposes.`,
   }));
 
-  const publicationScores = titles.map(() => Math.max(0, Math.min(100, base + Math.floor(rnd() * 30) - 15)));
-  const benchmarkAdjective = pick();
+  const disagreementInput = user.split(/^# Where the models disagree most\s*$/m)[1]?.split(/\n\s*\n/)[0]?.trim();
+  const disagreement = disagreementInput && !/^Return the JSON/.test(disagreementInput) ? disagreementInput : `The models agree closely on ${surname}'s publications.`;
 
-  return {
-    scores,
-    rationale,
-    summary,
-    sections,
-    strengths: [`Consistent focus ${cite(0)}`, `Clear reporting in ${cite(1)}`, `${benchmarkAdjective[0].toUpperCase()}${benchmarkAdjective.slice(1)} benchmarks`],
-    concerns: [`Limited independent replication of ${cite(2)}`, `Some artefacts not released`],
-    publicationScores,
-  };
+  return { summary, sections, disagreement };
 }
 
 export function createMockProvider(id = "mock"): LlmProvider {
   return {
     id,
     async complete(_system, user) {
-      const { name } = parseUserMessage(user);
-      const output = generateMockOutput(`${name}::${id}`, user);
+      const output = isPaperMessage(user)
+        ? generateMockPaperOutput(`${parsePaperMessage(user).title}::${id}`, user)
+        : generateMockSynthesis(`${parseSynthesisMessage(user).name}::${id}`, user);
       // Wrapped in a code fence on purpose: exercises the fence stripping in the parser.
       return "```json\n" + JSON.stringify(output, null, 2) + "\n```";
     },

@@ -55,7 +55,7 @@
     "statFields": "领域",
     "statQueue": "排队中",
     "featured": "精选分析",
-    "papersModels": "{papers, plural, other {# 篇论文}} · {models, plural, other {# 个模型}}",
+    "papersAnalyzedModels": "已分析{papers, plural, other {# 篇论文}} · {models, plural, other {# 个模型}}",
     "readAnalysis": "阅读分析",
     "noAnalysis": "尚未发布任何分析。队列中的第一个请求将显示在这里。",
     "recentlyPublished": "最近发布",
@@ -65,10 +65,22 @@
     "allFields": "所有领域",
     "howItWorks": "PeerScore 如何运作",
     "steps": {
-      "1": { "title": "提交姓名", "body": "任何人都可以提交研究者。只需一个字段，无需账户——请求会进入公开队列。" },
-      "2": { "title": "收集发表成果", "body": "一个 worker 在开放学术记录中识别该研究者，并下载其论文的元数据和摘要。" },
-      "3": { "title": "领域专属分析", "body": "多个语言模型使用为该领域编写的提示词阅读论文，并对五项标准独立打分。" },
-      "4": { "title": "文章上线", "body": "各项得分汇总为加权共识，完整的分析报告连同所有分歧在 24–48 小时内发布。" }
+      "1": {
+        "title": "提交姓名",
+        "body": "任何人都可以提交研究者。只需一个字段，无需账户——请求会进入公开队列。"
+      },
+      "2": {
+        "title": "收集发表成果",
+        "body": "一个 worker 在开放学术记录中识别该研究者，并下载其论文的元数据和摘要。"
+      },
+      "3": {
+        "title": "领域专属分析",
+        "body": "多个语言模型使用为该领域编写的提示词阅读论文，并对五项标准独立打分。"
+      },
+      "4": {
+        "title": "文章上线",
+        "body": "各项得分汇总为加权共识，完整的分析报告连同所有分歧在 24–48 小时内发布。"
+      }
     },
     "reproducibleTitle": "每一项分析都可复现。",
     "reproducibleBody": "提示词有版本号并经哈希处理，模型输出逐字保存，整条流水线开源。分析由语言模型生成，可能存在错误——可在任意文章页面举报。",
@@ -108,6 +120,7 @@
     "thPubs": "论文数",
     "thScore": "得分",
     "thAnalyzed": "分析日期",
+    "analyzedCount": "已分析 {n}",
     "analyzing": "分析中",
     "queuedEta": "排队中 · 24–48 小时",
     "pagination": "分页",
@@ -139,7 +152,7 @@
     "from": "来自 PeerScore，开放的研究者索引",
     "notice": "本文由语言模型根据论文元数据和摘要撰写。可能存在错误，且不构成同行评审。得分反映的是模型的解读，而非任何机构的观点。",
     "disagreeTitle": "模型分歧之处",
-    "spreadPoints": "最高与最低模型之间相差 <n>{spread}</n> 分。",
+    "spreadPoints": "得分最高与最低的论文之间相差 <n>{spread}</n> 分。",
     "categories": "分类",
     "published": "已发布",
     "inQueue": "排队中",
@@ -153,13 +166,15 @@
     "infoTopics": "主题",
     "infoLastRun": "最近运行",
     "ringLabel": "/ 100",
-    "infoStats": "差距 {spread} · 领域中位数 {median} · {models, plural, other {# 个模型}}",
+    "infoAggregate": "{n, plural, other {# 篇论文}}的引用加权平均 · 分歧 {spread} · 领域中位数 {median}",
+    "infoModels": "每篇论文 {models, plural, other {# 个模型}}",
     "analyzing": "分析中",
     "queued": "排队中",
     "scoreWithin": "得分将在 24–48 小时内可用",
     "breakdownHint": "权重按领域设定 · 每行最低的模型已高亮",
+    "breakdownNote": "基于{n, plural, other {# 篇论文}}的平均值",
     "thCriterion": "标准",
-    "thConsensus": "共识",
+    "thAverage": "平均",
     "criteria": {
       "rigor": "严谨性",
       "reproducibility": "可复现性",
@@ -174,9 +189,18 @@
     "thYear": "年份",
     "thTitle": "标题",
     "thVenue": "发表于",
+    "thCitations": "引用",
     "thCode": "代码",
     "thScore": "得分",
     "publicCode": "公开代码",
+    "sortedByCitations": "按引用数排序",
+    "paperSummary": "摘要",
+    "paperStrengths": "优点",
+    "paperConcerns": "疑虑",
+    "paperPerModel": "按模型",
+    "paperSpread": "模型间分歧 {spread}",
+    "notAnalyzed": "未分析",
+    "showAnalysis": "显示分析",
     "provPrompt": "提示词",
     "provSha": "sha {sha}",
     "provModels": "模型",
@@ -208,10 +232,26 @@
     "intro": "只需一个字段，无需账户。请求会进入公开队列，分析完成后文章会自动发布。",
     "whatHappensNext": "接下来会发生什么",
     "steps": {
-      "1": { "when": "几分钟", "title": "已排队", "body": "你的请求会以公开 ID 和队列位置保存。不会收集关于你的任何其他信息。" },
-      "2": { "when": "数小时", "title": "已收集发表成果", "body": "worker 在开放学术记录中识别该姓名，并下载元数据、摘要和代码链接。" },
-      "3": { "when": "数小时", "title": "领域专属分析", "body": "多个语言模型使用为该领域编写的提示词阅读论文，并对五项标准独立打分。" },
-      "4": { "when": "24–48 小时", "title": "文章已发布", "body": "得分汇总，分析报告和所有分歧一并发布，页面自动上线。" }
+      "1": {
+        "when": "几分钟",
+        "title": "已排队",
+        "body": "你的请求会以公开 ID 和队列位置保存。不会收集关于你的任何其他信息。"
+      },
+      "2": {
+        "when": "数小时",
+        "title": "已收集发表成果",
+        "body": "worker 在开放学术记录中识别该姓名，并下载元数据、摘要和代码链接。"
+      },
+      "3": {
+        "when": "数小时",
+        "title": "领域专属分析",
+        "body": "多个语言模型使用为该领域编写的提示词阅读论文，并对五项标准独立打分。"
+      },
+      "4": {
+        "when": "24–48 小时",
+        "title": "文章已发布",
+        "body": "得分汇总，分析报告和所有分歧一并发布，页面自动上线。"
+      }
     },
     "whoCanBeSubmitted": "可以提交谁",
     "eligible": {

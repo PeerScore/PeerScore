@@ -1,5 +1,8 @@
-// Strict JSON contract between the reviewer prompts (prompts/*.md) and the
-// worker. Every LLM provider must return a document matching `AnalysisOutput`.
+// Strict JSON contracts between the prompts (prompts/*.md) and the worker.
+//  - `paperAnalysisSchema`: what every LLM provider returns for ONE publication
+//    (field prompt).
+//  - `synthesisSchema`: what the synthesis call returns for the researcher
+//    (prompts/_synthesis.md), generated from the per-publication analyses.
 
 import { z } from "zod";
 import { CRITERIA } from "../src/lib/scoring";
@@ -27,20 +30,28 @@ export const sectionSchema = z.object({
   body: z.string().min(1),
 });
 
-export const analysisOutputSchema = z.object({
+/** Per-publication review returned by each model. */
+export const paperAnalysisSchema = z.object({
   scores: scoresSchema,
   rationale: rationaleSchema,
+  /** Markdown, one short paragraph about this paper. */
+  summary: z.string().min(1),
+  strengths: z.array(z.string()).default([]),
+  concerns: z.array(z.string()).default([]),
+});
+
+/** Researcher-level synthesis returned by the synthesis call. */
+export const synthesisSchema = z.object({
   /** Markdown, two paragraphs, encyclopedic third person, cites publications like [3]. */
   summary: z.string().min(1),
   /** Exactly three sections: "Methods and rigor", "Reproducibility", "Field impact". */
   sections: z.array(sectionSchema).min(1),
-  strengths: z.array(z.string()).default([]),
-  concerns: z.array(z.string()).default([]),
-  /** Optional per-publication scores, same order as the publications in the prompt. */
-  publicationScores: z.array(z.coerce.number().int().min(0).max(100)).optional(),
+  /** Markdown: the publication / criterion where the models disagree most. */
+  disagreement: z.string().default(""),
 });
 
-export type AnalysisOutput = z.infer<typeof analysisOutputSchema>;
+export type PaperAnalysisOutput = z.infer<typeof paperAnalysisSchema>;
+export type SynthesisOutput = z.infer<typeof synthesisSchema>;
 export type AnalysisScores = z.infer<typeof scoresSchema>;
 
 export const SECTION_TITLES = ["Methods and rigor", "Reproducibility", "Field impact"] as const;

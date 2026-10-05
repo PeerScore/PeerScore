@@ -9,26 +9,31 @@ PeerScore is an open-source Next.js 16 (App Router, TypeScript, Tailwind 4) site
 4. A worker (separate process) picks submissions asynchronously: resolves the researcher in open records (OpenAlex), downloads publication metadata/abstracts, runs the field-specific LLM analysis with several models, writes the result, status → `PUBLISHED`. The article page goes live automatically.
 
 ## Domain model (Prisma, Postgres) — authoritative names
-- `Submission` { id (cuid), name, status: QUEUED|RESOLVING|FETCHING|ANALYZING|PUBLISHED|FAILED, error?, researcherId?, createdAt, updatedAt }
-- `Researcher` { id, slug (unique, from name), name, affiliation?, country?, orcid?, openalexId?, fieldId, activeFrom?, activeTo?, publicationCount, openCodeCount, topics: string[], createdAt, updatedAt }
-- `Field` { id, slug (unique), name, promptKey (e.g. "compbio"), weights: Json {rigor, reproducibility, novelty, impact, clarity} }
-- `Publication` { id, researcherId, title, year, venue?, doi?, url?, abstract?, hasCode: boolean, score?: Int }
-- `AnalysisRun` { id, researcherId, status, promptKey, promptVersion, promptSha, startedAt, finishedAt?, durationSec?, score? (weighted consensus 0-100), spread?, fieldMedian?, summary? (markdown), disagreement? (markdown), sections: Json (array of {title, body}), isCurrent: boolean }
-- `ModelScore` { id, runId, model (string, e.g. "model-a"), rigor, reproducibility, novelty, impact, clarity, weighted, rationale: Json }
+The unit of analysis is the **publication**: every paper is read and scored by several LLMs with the field-specific prompt; the researcher's score is an aggregate of its publications and the researcher-level text is a synthesis generated from the per-publication analyses.
 
-Scores are integers 0–100. Consensus = mean of model weighted scores, rounded. Spread = max − min of model weighted scores.
+- `Submission` { id (cuid), name, status: QUEUED|RESOLVING|FETCHING|ANALYZING|PUBLISHED|FAILED, error?, researcherId?, createdAt, updatedAt }
+- `Researcher` { id, slug (unique, from name), name, affiliation?, country?, orcid?, openalexId?, fieldId, activeFrom?, activeTo?, publicationCount, openCodeCount, topics: string[], createdAt, updatedAt } — no score columns; the score lives on the current `AnalysisRun`.
+- `Field` { id, slug (unique), name, promptKey (e.g. "compbio"), weights: Json {rigor, reproducibility, novelty, impact, clarity} }
+- `Publication` { id, researcherId, title, year, venue?, doi?, url?, abstract?, hasCode: boolean, citationCount (OpenAlex `cited_by_count`, default 0), openalexId? } — no stored score (derived from its current `PublicationAnalysis`).
+- `AnalysisRun` — researcher-level batch + synthesis { id, researcherId, status, promptKey, promptVersion, promptSha, models: string[], startedAt, finishedAt?, durationSec?, score? (aggregate, see below), spread? (max − min of the current publication scores), fieldMedian?, publicationsAnalyzed, summary? (markdown synthesis, 2 paragraphs), disagreement? (markdown: the publication/criterion where models disagree most), sections: Json (array of {title, body}), isCurrent: boolean }
+- `PublicationAnalysis` { id, publicationId, runId, status, score? (consensus 0–100 = rounded mean of the model weighted scores), spread? (max − min of the model weighted scores), summary? (markdown, one short paragraph), strengths: Json (string[]), concerns: Json (string[]), isCurrent, createdAt, finishedAt? } — `@@unique([runId, publicationId])`, `@@index([publicationId, isCurrent])`.
+- `ModelScore` { id, analysisId (→ PublicationAnalysis), model (string, e.g. "model-a"), rigor, reproducibility, novelty, impact, clarity, weighted, rationale: Json } — `@@unique([analysisId, model])`.
+
+Scores are integers 0–100. Per model and publication: `weighted` = weighted mean of the five criteria with the field weights. Per publication: consensus = mean of the model weighted scores, rounded; spread = max − min. Per researcher (`src/lib/scoring.ts` → `aggregateResearcherScore`): citation-weighted mean of the current publication scores with weight `w = 1 + ln(1 + citationCount)` (uncited papers still count with weight 1), rounded; spread = max − min of the publication scores.
 
 ### Prisma notes (data layer, implemented)
-- `Submission.status` and `AnalysisRun.status` are Postgres enums: `SubmissionStatus` (values above) and `RunStatus { RUNNING, COMPLETED, FAILED }`. A run is "live" when `isCurrent && status = COMPLETED`; `completeRun()` sets `isCurrent` on the new run and clears it on older runs in one transaction.
-- `ModelScore` has `@@unique([runId, model])`. `Researcher.activeFrom/activeTo` are `Int` years. `Field.weights` and `AnalysisRun.sections` / `ModelScore.rationale` are `Json`.
+- `Submission.status`, `AnalysisRun.status` and `PublicationAnalysis.status` are Postgres enums: `SubmissionStatus` (values above) and `RunStatus { RUNNING, COMPLETED, FAILED }`. A run is "live" when `isCurrent && status = COMPLETED`; `completeRun()` derives score/spread/publicationsAnalyzed from the run's COMPLETED publication analyses, sets `isCurrent` on the run and on those analyses, and clears it on the researcher's older runs / analyses in one transaction. A publication whose every model failed has a FAILED analysis and is excluded from the aggregate.
+- `replacePublications()` matches existing rows by OpenAlex id, DOI or (title, year) so publication ids — and the analyses attached to them — survive a re-analysis.
+- `Researcher.activeFrom/activeTo` are `Int` years. `Field.weights`, `AnalysisRun.sections`, `PublicationAnalysis.strengths/concerns` and `ModelScore.rationale` are `Json`.
 - Derived researcher status for the index filters (`src/lib/types.ts` → `ResearcherStatus`): `published` (has a live run), `analyzing` (a RUNNING run, nothing live), `pending` (neither). `GET /api/researchers` also accepts `status`, `letter`, `pageSize`, `sort=score|name|recent` (default `score`).
 - `POST /api/submissions` returns `200 { existingSlug }` when a researcher with the same slug already exists (nothing is created) and `201 { id, position }` otherwise; a name already in the pipeline returns that submission instead of a duplicate.
+- `GET /api/researchers/[slug]` returns `ResearcherArticle`: `run` (aggregate, synthesis, `models`, `modelAverages` = per-model criterion averages over the publications) and `publications[]`, each with `citationCount` and `analysis` ({ score, spread, summary, strengths, concerns, modelScores[] } or null).
 - Prisma client is generated with `engineType = "client"` + `@prisma/adapter-pg` (no Rust query engine at runtime); CLI options live in `prisma.config.ts`.
 
 ## Routes
 - `/` main page (featured analysis, recently published, browse by field, how it works, stats)
 - `/researchers` index (A–Z nav, filters: field, status, min score; table; pagination)
-- `/researchers/[slug]` article (contents sidebar, infobox with score ring, score breakdown table with per-model columns, analysis sections, publications table, provenance, references, categories)
+- `/researchers/[slug]` article (contents sidebar, infobox with score ring + "citation-weighted mean of N publications · spread · field median", score breakdown = per-criterion averages across publications with per-model average columns, synthesis sections + disagreement, publications list — most cited first, each row expandable to its per-paper analysis: criterion bars with per-model values, summary, strengths, concerns — provenance, references, categories)
 - `/submit` single-field form → confirmation state (server action)
 - `/queue` list of non-published submissions with status
 - `GET /api/researchers?q=&field=&minScore=&page=` JSON

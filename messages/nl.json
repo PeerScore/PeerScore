@@ -55,7 +55,7 @@
     "statFields": "Vakgebieden",
     "statQueue": "In de wachtrij",
     "featured": "Uitgelichte analyse",
-    "papersModels": "{papers, plural, one {# paper} other {# papers}} · {models, plural, one {# model} other {# modellen}}",
+    "papersAnalyzedModels": "{papers, plural, one {# paper} other {# papers}} geanalyseerd · {models, plural, one {# model} other {# modellen}}",
     "readAnalysis": "Lees de analyse",
     "noAnalysis": "Er is nog geen analyse gepubliceerd. De eerste inzending in de wachtrij verschijnt hier.",
     "recentlyPublished": "Recent gepubliceerd",
@@ -65,10 +65,22 @@
     "allFields": "Alle vakgebieden",
     "howItWorks": "Hoe PeerScore werkt",
     "steps": {
-      "1": { "title": "Dien een naam in", "body": "Iedereen kan een onderzoeker indienen. Eén veld, geen account — het verzoek komt in een openbare wachtrij." },
-      "2": { "title": "Publicaties worden verzameld", "body": "Een worker zoekt de onderzoeker op in open wetenschappelijke bronnen en downloadt metadata en samenvattingen van de publicaties." },
-      "3": { "title": "Vakspecifieke analyse", "body": "Meerdere taalmodellen lezen de publicaties met een prompt voor het vakgebied en beoordelen vijf criteria onafhankelijk van elkaar." },
-      "4": { "title": "Het artikel gaat live", "body": "De scores worden samengevoegd tot een gewogen consensus en het volledige verslag, met elk meningsverschil, wordt binnen 24–48 u gepubliceerd." }
+      "1": {
+        "title": "Dien een naam in",
+        "body": "Iedereen kan een onderzoeker indienen. Eén veld, geen account — het verzoek komt in een openbare wachtrij."
+      },
+      "2": {
+        "title": "Publicaties worden verzameld",
+        "body": "Een worker zoekt de onderzoeker op in open wetenschappelijke bronnen en downloadt metadata en samenvattingen van de publicaties."
+      },
+      "3": {
+        "title": "Vakspecifieke analyse",
+        "body": "Meerdere taalmodellen lezen de publicaties met een prompt voor het vakgebied en beoordelen vijf criteria onafhankelijk van elkaar."
+      },
+      "4": {
+        "title": "Het artikel gaat live",
+        "body": "De scores worden samengevoegd tot een gewogen consensus en het volledige verslag, met elk meningsverschil, wordt binnen 24–48 u gepubliceerd."
+      }
     },
     "reproducibleTitle": "Elke analyse is reproduceerbaar.",
     "reproducibleBody": "Prompts zijn geversioneerd en gehasht, modeluitvoer wordt letterlijk opgeslagen en de hele pipeline is open source. Analyses worden gegenereerd door taalmodellen en kunnen fouten bevatten — meld er een vanaf elke artikelpagina.",
@@ -108,6 +120,7 @@
     "thPubs": "Publ.",
     "thScore": "Score",
     "thAnalyzed": "Geanalyseerd",
+    "analyzedCount": "{n} geanalyseerd",
     "analyzing": "wordt geanalyseerd",
     "queuedEta": "in de wachtrij · 24–48 u",
     "pagination": "Paginering",
@@ -139,7 +152,7 @@
     "from": "Uit PeerScore, de open onderzoekersindex",
     "notice": "Dit artikel is geschreven door taalmodellen op basis van publicatiemetadata en samenvattingen. Het kan fouten bevatten en is geen peer review. De scores weerspiegelen de lezing van de modellen, niet de mening van een instelling.",
     "disagreeTitle": "Waar de modellen van mening verschillen",
-    "spreadPoints": "Spreiding van <n>{spread}</n> punten tussen het hoogste en het laagste model.",
+    "spreadPoints": "Spreiding van <n>{spread}</n> punten tussen de best en de slechtst beoordeelde publicatie.",
     "categories": "Categorieën",
     "published": "Gepubliceerd",
     "inQueue": "In de wachtrij",
@@ -153,13 +166,15 @@
     "infoTopics": "Onderwerpen",
     "infoLastRun": "Laatste run",
     "ringLabel": "/ 100",
-    "infoStats": "spreiding {spread} · mediaan vakgebied {median} · {models, plural, one {# model} other {# modellen}}",
+    "infoAggregate": "citatiegewogen gemiddelde van {n, plural, one {# paper} other {# papers}} · spreiding {spread} · mediaan van het vakgebied {median}",
+    "infoModels": "{models, plural, one {# model} other {# modellen}} per publicatie",
     "analyzing": "analyse",
     "queued": "wachtrij",
     "scoreWithin": "score beschikbaar binnen 24–48 u",
     "breakdownHint": "Gewichten worden per vakgebied bepaald · laagste model per rij gemarkeerd",
+    "breakdownNote": "gemiddeld over {n, plural, one {# paper} other {# papers}}",
     "thCriterion": "Criterium",
-    "thConsensus": "Consensus",
+    "thAverage": "Gemiddelde",
     "criteria": {
       "rigor": "Nauwkeurigheid",
       "reproducibility": "Reproduceerbaarheid",
@@ -174,9 +189,18 @@
     "thYear": "Jaar",
     "thTitle": "Titel",
     "thVenue": "Venue",
+    "thCitations": "Citaties",
     "thCode": "Code",
     "thScore": "Score",
     "publicCode": "Openbare code",
+    "sortedByCitations": "gesorteerd op citaties",
+    "paperSummary": "Samenvatting",
+    "paperStrengths": "Sterke punten",
+    "paperConcerns": "Bedenkingen",
+    "paperPerModel": "Per model",
+    "paperSpread": "spreiding tussen modellen {spread}",
+    "notAnalyzed": "niet geanalyseerd",
+    "showAnalysis": "Analyse tonen",
     "provPrompt": "Prompt",
     "provSha": "sha {sha}",
     "provModels": "Modellen",
@@ -208,10 +232,26 @@
     "intro": "Eén veld, geen account. Het verzoek komt in een openbare wachtrij en het artikel wordt automatisch gepubliceerd zodra de analyse klaar is.",
     "whatHappensNext": "Wat er daarna gebeurt",
     "steps": {
-      "1": { "when": "minuten", "title": "In de wachtrij", "body": "Je verzoek wordt opgeslagen met een openbaar id en een positie in de wachtrij. Verder wordt niets over je verzameld." },
-      "2": { "when": "uren", "title": "Publicaties verzameld", "body": "Een worker zoekt de naam op in open wetenschappelijke bronnen en downloadt metadata, samenvattingen en codelinks." },
-      "3": { "when": "uren", "title": "Vakspecifieke analyse", "body": "Meerdere taalmodellen lezen de publicaties met een prompt voor het vakgebied en beoordelen vijf criteria onafhankelijk van elkaar." },
-      "4": { "when": "24–48 u", "title": "Artikel gepubliceerd", "body": "De scores worden samengevoegd, het verslag en elk meningsverschil worden gepubliceerd, en de pagina gaat automatisch live." }
+      "1": {
+        "when": "minuten",
+        "title": "In de wachtrij",
+        "body": "Je verzoek wordt opgeslagen met een openbaar id en een positie in de wachtrij. Verder wordt niets over je verzameld."
+      },
+      "2": {
+        "when": "uren",
+        "title": "Publicaties verzameld",
+        "body": "Een worker zoekt de naam op in open wetenschappelijke bronnen en downloadt metadata, samenvattingen en codelinks."
+      },
+      "3": {
+        "when": "uren",
+        "title": "Vakspecifieke analyse",
+        "body": "Meerdere taalmodellen lezen de publicaties met een prompt voor het vakgebied en beoordelen vijf criteria onafhankelijk van elkaar."
+      },
+      "4": {
+        "when": "24–48 u",
+        "title": "Artikel gepubliceerd",
+        "body": "De scores worden samengevoegd, het verslag en elk meningsverschil worden gepubliceerd, en de pagina gaat automatisch live."
+      }
     },
     "whoCanBeSubmitted": "Wie kan worden ingediend",
     "eligible": {

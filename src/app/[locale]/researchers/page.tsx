@@ -304,8 +304,11 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
                           <Td>
                             <Chip href={`/researchers?field=${r.field.slug}`}>{r.field.name}</Chip>
                           </Td>
-                          <Td align="right" mono>
+                          <Td align="right" mono className="whitespace-nowrap">
                             {r.publicationCount}
+                            {isPublished && r.publicationsAnalyzed != null && (
+                              <div className="font-sans text-[11.5px] text-muted">{t("analyzedCount", { n: r.publicationsAnalyzed })}</div>
+                            )}
                           </Td>
                           <Td className="w-[220px]">
                             {isPublished ? (

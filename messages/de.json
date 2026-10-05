@@ -55,7 +55,7 @@
     "statFields": "Fachgebiete",
     "statQueue": "In der Warteschlange",
     "featured": "Ausgewählte Analyse",
-    "papersModels": "{papers, plural, one {# Paper} other {# Paper}} · {models, plural, one {# Modell} other {# Modelle}}",
+    "papersAnalyzedModels": "{papers, plural, one {# Paper} other {# Paper}} analysiert · {models, plural, one {# Modell} other {# Modelle}}",
     "readAnalysis": "Analyse lesen",
     "noAnalysis": "Es wurde noch keine Analyse veröffentlicht. Der erste Eintrag der Warteschlange erscheint hier.",
     "recentlyPublished": "Kürzlich veröffentlicht",
@@ -65,10 +65,22 @@
     "allFields": "Alle Fachgebiete",
     "howItWorks": "So funktioniert PeerScore",
     "steps": {
-      "1": { "title": "Einen Namen einreichen", "body": "Jede:r kann Forschende vorschlagen. Ein Feld, kein Konto — die Anfrage landet in einer öffentlichen Warteschlange." },
-      "2": { "title": "Publikationen werden gesammelt", "body": "Ein Worker identifiziert die Person in offenen Wissenschaftsdatenbanken und lädt Metadaten und Abstracts der Publikationen." },
-      "3": { "title": "Fachspezifische Analyse", "body": "Mehrere Sprachmodelle lesen die Publikationen mit einem für das Fachgebiet geschriebenen Prompt und bewerten fünf Kriterien unabhängig voneinander." },
-      "4": { "title": "Der Artikel geht online", "body": "Die Scores werden zu einem gewichteten Konsens zusammengeführt; der vollständige Bericht mit allen Abweichungen erscheint innerhalb von 24–48 h." }
+      "1": {
+        "title": "Einen Namen einreichen",
+        "body": "Jede:r kann Forschende vorschlagen. Ein Feld, kein Konto — die Anfrage landet in einer öffentlichen Warteschlange."
+      },
+      "2": {
+        "title": "Publikationen werden gesammelt",
+        "body": "Ein Worker identifiziert die Person in offenen Wissenschaftsdatenbanken und lädt Metadaten und Abstracts der Publikationen."
+      },
+      "3": {
+        "title": "Fachspezifische Analyse",
+        "body": "Mehrere Sprachmodelle lesen die Publikationen mit einem für das Fachgebiet geschriebenen Prompt und bewerten fünf Kriterien unabhängig voneinander."
+      },
+      "4": {
+        "title": "Der Artikel geht online",
+        "body": "Die Scores werden zu einem gewichteten Konsens zusammengeführt; der vollständige Bericht mit allen Abweichungen erscheint innerhalb von 24–48 h."
+      }
     },
     "reproducibleTitle": "Jede Analyse ist reproduzierbar.",
     "reproducibleBody": "Prompts sind versioniert und gehasht, Modellausgaben werden wörtlich gespeichert, und die gesamte Pipeline ist Open Source. Analysen werden von Sprachmodellen erzeugt und können Fehler enthalten — melden Sie einen von jeder Artikelseite aus.",
@@ -108,6 +120,7 @@
     "thPubs": "Publ.",
     "thScore": "Score",
     "thAnalyzed": "Analysiert",
+    "analyzedCount": "{n} analysiert",
     "analyzing": "wird analysiert",
     "queuedEta": "in der Warteschlange · 24–48 h",
     "pagination": "Seitennavigation",
@@ -139,7 +152,7 @@
     "from": "Aus PeerScore, dem offenen Forschungsindex",
     "notice": "Dieser Artikel wurde von Sprachmodellen aus Publikationsmetadaten und Abstracts geschrieben. Er kann Fehler enthalten und ist kein Peer-Review. Die Scores geben die Lesart der Modelle wieder, nicht die Meinung einer Institution.",
     "disagreeTitle": "Wo die Modelle abweichen",
-    "spreadPoints": "<n>{spread}</n> Punkte Abstand zwischen dem höchsten und dem niedrigsten Modell.",
+    "spreadPoints": "Abstand von <n>{spread}</n> Punkten zwischen der best- und der schlechtestbewerteten Publikation.",
     "categories": "Kategorien",
     "published": "Veröffentlicht",
     "inQueue": "In der Warteschlange",
@@ -153,13 +166,15 @@
     "infoTopics": "Themen",
     "infoLastRun": "Letzter Lauf",
     "ringLabel": "/ 100",
-    "infoStats": "Abstand {spread} · Median des Fachs {median} · {models, plural, one {# Modell} other {# Modelle}}",
+    "infoAggregate": "zitationsgewichteter Mittelwert aus {n, plural, one {# Paper} other {# Paper}} · Abstand {spread} · Median des Fachs {median}",
+    "infoModels": "{models, plural, one {# Modell} other {# Modelle}} pro Publikation",
     "analyzing": "Analyse",
     "queued": "wartet",
     "scoreWithin": "Score innerhalb von 24–48 h verfügbar",
     "breakdownHint": "Gewichte werden pro Fachgebiet festgelegt · niedrigstes Modell pro Zeile hervorgehoben",
+    "breakdownNote": "gemittelt über {n, plural, one {# Paper} other {# Paper}}",
     "thCriterion": "Kriterium",
-    "thConsensus": "Konsens",
+    "thAverage": "Durchschnitt",
     "criteria": {
       "rigor": "Stringenz",
       "reproducibility": "Reproduzierbarkeit",
@@ -174,9 +189,18 @@
     "thYear": "Jahr",
     "thTitle": "Titel",
     "thVenue": "Venue",
+    "thCitations": "Zitationen",
     "thCode": "Code",
     "thScore": "Score",
     "publicCode": "Öffentlicher Code",
+    "sortedByCitations": "nach Zitationen sortiert",
+    "paperSummary": "Zusammenfassung",
+    "paperStrengths": "Stärken",
+    "paperConcerns": "Bedenken",
+    "paperPerModel": "Pro Modell",
+    "paperSpread": "Abstand zwischen Modellen {spread}",
+    "notAnalyzed": "nicht analysiert",
+    "showAnalysis": "Analyse anzeigen",
     "provPrompt": "Prompt",
     "provSha": "sha {sha}",
     "provModels": "Modelle",
@@ -208,10 +232,26 @@
     "intro": "Ein Feld, kein Konto. Die Anfrage landet in einer öffentlichen Warteschlange und der Artikel wird automatisch veröffentlicht, sobald die Analyse abgeschlossen ist.",
     "whatHappensNext": "Was als Nächstes passiert",
     "steps": {
-      "1": { "when": "Minuten", "title": "In der Warteschlange", "body": "Ihre Anfrage wird mit einer öffentlichen ID und einer Position in der Warteschlange gespeichert. Sonst wird nichts über Sie erfasst." },
-      "2": { "when": "Stunden", "title": "Publikationen gesammelt", "body": "Ein Worker identifiziert den Namen in offenen Wissenschaftsdatenbanken und lädt Metadaten, Abstracts und Code-Links." },
-      "3": { "when": "Stunden", "title": "Fachspezifische Analyse", "body": "Mehrere Sprachmodelle lesen die Publikationen mit einem für das Fachgebiet geschriebenen Prompt und bewerten fünf Kriterien unabhängig voneinander." },
-      "4": { "when": "24–48 h", "title": "Artikel veröffentlicht", "body": "Die Scores werden zusammengeführt, Bericht und alle Abweichungen veröffentlicht, und die Seite geht automatisch online." }
+      "1": {
+        "when": "Minuten",
+        "title": "In der Warteschlange",
+        "body": "Ihre Anfrage wird mit einer öffentlichen ID und einer Position in der Warteschlange gespeichert. Sonst wird nichts über Sie erfasst."
+      },
+      "2": {
+        "when": "Stunden",
+        "title": "Publikationen gesammelt",
+        "body": "Ein Worker identifiziert den Namen in offenen Wissenschaftsdatenbanken und lädt Metadaten, Abstracts und Code-Links."
+      },
+      "3": {
+        "when": "Stunden",
+        "title": "Fachspezifische Analyse",
+        "body": "Mehrere Sprachmodelle lesen die Publikationen mit einem für das Fachgebiet geschriebenen Prompt und bewerten fünf Kriterien unabhängig voneinander."
+      },
+      "4": {
+        "when": "24–48 h",
+        "title": "Artikel veröffentlicht",
+        "body": "Die Scores werden zusammengeführt, Bericht und alle Abweichungen veröffentlicht, und die Seite geht automatisch online."
+      }
     },
     "whoCanBeSubmitted": "Wer vorgeschlagen werden kann",
     "eligible": {

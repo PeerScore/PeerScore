@@ -55,7 +55,7 @@
     "statFields": "Campos",
     "statQueue": "En cola",
     "featured": "Análisis destacado",
-    "papersModels": "{papers, plural, one {# artículo} other {# artículos}} · {models, plural, one {# modelo} other {# modelos}}",
+    "papersAnalyzedModels": "{papers, plural, one {# artículo} other {# artículos}} analizados · {models, plural, one {# modelo} other {# modelos}}",
     "readAnalysis": "Leer el análisis",
     "noAnalysis": "Todavía no se ha publicado ningún análisis. La primera solicitud de la cola aparecerá aquí.",
     "recentlyPublished": "Publicados recientemente",
@@ -65,10 +65,22 @@
     "allFields": "Todos los campos",
     "howItWorks": "Cómo funciona PeerScore",
     "steps": {
-      "1": { "title": "Propón un nombre", "body": "Cualquiera puede proponer un investigador. Un solo campo, sin cuenta: la solicitud entra en una cola pública." },
-      "2": { "title": "Se recopilan las publicaciones", "body": "Un worker identifica al investigador en registros académicos abiertos y descarga los metadatos y resúmenes de sus publicaciones." },
-      "3": { "title": "Análisis específico del campo", "body": "Varios modelos de lenguaje leen las publicaciones con un prompt escrito para el campo y puntúan cinco criterios de forma independiente." },
-      "4": { "title": "El artículo se publica", "body": "Las puntuaciones se agregan en un consenso ponderado y el informe completo, con cada desacuerdo, se publica en 24–48 h." }
+      "1": {
+        "title": "Propón un nombre",
+        "body": "Cualquiera puede proponer un investigador. Un solo campo, sin cuenta: la solicitud entra en una cola pública."
+      },
+      "2": {
+        "title": "Se recopilan las publicaciones",
+        "body": "Un worker identifica al investigador en registros académicos abiertos y descarga los metadatos y resúmenes de sus publicaciones."
+      },
+      "3": {
+        "title": "Análisis específico del campo",
+        "body": "Varios modelos de lenguaje leen las publicaciones con un prompt escrito para el campo y puntúan cinco criterios de forma independiente."
+      },
+      "4": {
+        "title": "El artículo se publica",
+        "body": "Las puntuaciones se agregan en un consenso ponderado y el informe completo, con cada desacuerdo, se publica en 24–48 h."
+      }
     },
     "reproducibleTitle": "Cada análisis es reproducible.",
     "reproducibleBody": "Los prompts están versionados y firmados con hash, las salidas de los modelos se guardan literalmente y toda la cadena es de código abierto. Los análisis los generan modelos de lenguaje y pueden contener errores: puedes informar de uno desde cualquier página de artículo.",
@@ -108,6 +120,7 @@
     "thPubs": "Publ.",
     "thScore": "Puntuación",
     "thAnalyzed": "Analizado",
+    "analyzedCount": "{n} analizados",
     "analyzing": "analizando",
     "queuedEta": "en cola · 24–48 h",
     "pagination": "Paginación",
@@ -139,7 +152,7 @@
     "from": "De PeerScore, el índice abierto de investigadores",
     "notice": "Este artículo lo escribieron modelos de lenguaje a partir de los metadatos y resúmenes de las publicaciones. Puede contener errores y no es una revisión por pares. Las puntuaciones reflejan la lectura de los modelos, no la opinión de ninguna institución.",
     "disagreeTitle": "Dónde discrepan los modelos",
-    "spreadPoints": "Diferencia de <n>{spread}</n> puntos entre el modelo más alto y el más bajo.",
+    "spreadPoints": "Dispersión de <n>{spread}</n> puntos entre la publicación mejor y peor puntuada.",
     "categories": "Categorías",
     "published": "Publicado",
     "inQueue": "En cola",
@@ -153,13 +166,15 @@
     "infoTopics": "Temas",
     "infoLastRun": "Última ejecución",
     "ringLabel": "/ 100",
-    "infoStats": "diferencia {spread} · mediana del campo {median} · {models, plural, one {# modelo} other {# modelos}}",
+    "infoAggregate": "media ponderada por citas de {n, plural, one {# artículo} other {# artículos}} · dispersión {spread} · mediana del campo {median}",
+    "infoModels": "{models, plural, one {# modelo} other {# modelos}} por publicación",
     "analyzing": "analizando",
     "queued": "en cola",
     "scoreWithin": "puntuación disponible en 24–48 h",
     "breakdownHint": "Los pesos se fijan por campo · se resalta el modelo más bajo de cada fila",
+    "breakdownNote": "promedio de {n, plural, one {# artículo} other {# artículos}}",
     "thCriterion": "Criterio",
-    "thConsensus": "Consenso",
+    "thAverage": "Promedio",
     "criteria": {
       "rigor": "Rigor",
       "reproducibility": "Reproducibilidad",
@@ -174,9 +189,18 @@
     "thYear": "Año",
     "thTitle": "Título",
     "thVenue": "Revista / congreso",
+    "thCitations": "Citas",
     "thCode": "Código",
     "thScore": "Puntuación",
     "publicCode": "Código público",
+    "sortedByCitations": "ordenados por citas",
+    "paperSummary": "Resumen",
+    "paperStrengths": "Fortalezas",
+    "paperConcerns": "Reparos",
+    "paperPerModel": "Por modelo",
+    "paperSpread": "dispersión entre modelos {spread}",
+    "notAnalyzed": "no analizado",
+    "showAnalysis": "Mostrar análisis",
     "provPrompt": "Prompt",
     "provSha": "sha {sha}",
     "provModels": "Modelos",
@@ -208,10 +232,26 @@
     "intro": "Un solo campo, sin cuenta. La solicitud entra en una cola pública y el artículo se publica automáticamente cuando termina el análisis.",
     "whatHappensNext": "Qué ocurre después",
     "steps": {
-      "1": { "when": "minutos", "title": "En cola", "body": "Tu solicitud se guarda con un identificador público y una posición en la cola. No se recopila nada más sobre ti." },
-      "2": { "when": "horas", "title": "Publicaciones recopiladas", "body": "Un worker identifica el nombre en registros académicos abiertos y descarga metadatos, resúmenes y enlaces al código." },
-      "3": { "when": "horas", "title": "Análisis específico del campo", "body": "Varios modelos de lenguaje leen las publicaciones con un prompt escrito para el campo y puntúan cinco criterios de forma independiente." },
-      "4": { "when": "24–48 h", "title": "Artículo publicado", "body": "Las puntuaciones se agregan, se publican el informe y cada desacuerdo, y la página se activa automáticamente." }
+      "1": {
+        "when": "minutos",
+        "title": "En cola",
+        "body": "Tu solicitud se guarda con un identificador público y una posición en la cola. No se recopila nada más sobre ti."
+      },
+      "2": {
+        "when": "horas",
+        "title": "Publicaciones recopiladas",
+        "body": "Un worker identifica el nombre en registros académicos abiertos y descarga metadatos, resúmenes y enlaces al código."
+      },
+      "3": {
+        "when": "horas",
+        "title": "Análisis específico del campo",
+        "body": "Varios modelos de lenguaje leen las publicaciones con un prompt escrito para el campo y puntúan cinco criterios de forma independiente."
+      },
+      "4": {
+        "when": "24–48 h",
+        "title": "Artículo publicado",
+        "body": "Las puntuaciones se agregan, se publican el informe y cada desacuerdo, y la página se activa automáticamente."
+      }
     },
     "whoCanBeSubmitted": "Quién puede proponerse",
     "eligible": {

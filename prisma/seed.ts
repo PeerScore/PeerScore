@@ -1,17 +1,19 @@
 // Development seed — fictional researchers, institutions and publications.
-// Idempotent: fields and researchers are upserted by slug, runs are only
-// created when a researcher has no live analysis yet, submissions by name.
+// Idempotent: fields and researchers are upserted by slug, runs (one
+// PublicationAnalysis per publication, three mock models each, plus the
+// researcher-level synthesis) are only created when a researcher has no live
+// analysis yet, submissions by name.
 // Run with `npm run db:seed` (or automatically by `prisma migrate reset`).
 import "dotenv/config";
 import { prisma } from "../src/lib/db";
 import { upsertField } from "../src/lib/repositories/fields";
 import { replacePublications, upsertResearcher } from "../src/lib/repositories/researchers";
-import { completeRun, createRun } from "../src/lib/repositories/runs";
+import { completePublicationAnalysis, completeRun, createPublicationAnalysis, createRun } from "../src/lib/repositories/runs";
 import { PENDING_STATUSES } from "../src/lib/repositories/submissions";
 import { CRITERIA, type CriterionScores, type CriterionWeights } from "../src/lib/scoring";
 import type { AnalysisSection } from "../src/lib/types";
 
-const PROMPT_VERSION = "2026.03";
+const PROMPT_VERSION = "2";
 const MODELS = ["model-a", "model-b", "model-c"] as const;
 
 const fields: { slug: string; name: string; promptKey: string; weights: CriterionWeights }[] = [
@@ -30,7 +32,13 @@ interface SeedPublication {
   year: number;
   venue: string;
   hasCode: boolean;
+  /** Target consensus score of this paper; per-model criterion scores are derived from it. */
   score: number;
+}
+
+/** Deterministic, plausible citation count: older and better papers are cited more. */
+function citations(p: SeedPublication): number {
+  return Math.max(0, Math.round((2026 - p.year) * (p.score / 4) + (p.hasCode ? 12 : 0)));
 }
 
 interface SeedResearcher {
@@ -38,7 +46,7 @@ interface SeedResearcher {
   affiliation: string;
   country: string;
   field: string;
-  /** Target consensus score; per-model criterion scores are derived from it. */
+  /** Rough overall level, used for the prose only (the score is aggregated from the papers). */
   target: number;
   activeFrom: number;
   topics: string[];
@@ -234,14 +242,19 @@ function clamp(v: number): number {
   return Math.max(0, Math.min(100, Math.round(v)));
 }
 
-function modelScores(target: number, model: (typeof MODELS)[number]): CriterionScores & { rationale: Record<string, string> } {
+function modelScores(target: number, model: (typeof MODELS)[number], title: string): CriterionScores & { rationale: Record<string, string> } {
   const scores = {} as CriterionScores;
   const rationale: Record<string, string> = {};
   CRITERIA.forEach((criterion, i) => {
     scores[criterion] = clamp(target + MODEL_SHIFT[model] + CRITERION_OFFSET[model][i]);
-    rationale[criterion] = `${model} assessment of ${criterion} based on the five sampled publications.`;
+    rationale[criterion] = `${model} assessment of ${criterion} for "${title}" from its abstract and metadata.`;
   });
   return { ...scores, rationale };
+}
+
+function paperSummary(r: SeedResearcher, p: SeedPublication): string {
+  const level = p.score >= 70 ? "a solid contribution" : p.score >= 50 ? "a reasonable but uneven contribution" : "a limited contribution";
+  return `"${p.title}" (${p.venue}, ${p.year}) is ${level} to ${r.topics[0]}. ${p.hasCode ? "Code is publicly available, which supports reproduction of the main result." : "No public code or data were found, so the main result cannot be re-derived from released material."}`;
 }
 
 function sections(r: SeedResearcher): AnalysisSection[] {
@@ -286,9 +299,9 @@ async function seedResearchers() {
       orcid: null,
       openalexId: null,
     });
-    await replacePublications(
+    const stored = await replacePublications(
       id,
-      r.publications.map((p) => ({ ...p, doi: null, url: null, abstract: null })),
+      r.publications.map((p) => ({ title: p.title, year: p.year, venue: p.venue, hasCode: p.hasCode, citationCount: citations(p), doi: null, url: null, abstract: null })),
     );
 
     const live = await prisma.analysisRun.findFirst({ where: { researcherId: id, isCurrent: true, status: "COMPLETED" } });
@@ -303,16 +316,26 @@ async function seedResearchers() {
       promptKey: r.field,
       promptVersion: PROMPT_VERSION,
       promptSha: `sha256:${slug.padEnd(12, "0").slice(0, 12)}`,
+      models: [...MODELS],
       startedAt,
     });
+    for (const [i, p] of r.publications.entries()) {
+      const analysis = await createPublicationAnalysis(run.id, stored[i].id);
+      await completePublicationAnalysis(analysis.id, {
+        modelScores: MODELS.map((model) => ({ model, ...modelScores(p.score, model, p.title) })),
+        summary: paperSummary(r, p),
+        strengths: [p.hasCode ? "Public code accompanies the paper" : "Clear statement of the research question", `Published in ${p.venue}`],
+        concerns: [p.score >= 70 ? "Limited discussion of failure modes" : "Evidence is thinner than the claims", ...(p.hasCode ? [] : ["No released artefacts"])],
+        finishedAt: new Date(startedAt.getTime() + (i + 1) * 5 * 60_000),
+      });
+    }
     const completed = await completeRun(run.id, {
-      modelScores: MODELS.map((model) => ({ model, ...modelScores(r.target, model) })),
       summary: r.summary,
       disagreement: r.disagreement,
       sections: sections(r),
       finishedAt,
     });
-    console.log(`researcher ${slug}: score ${completed.score} (spread ${completed.spread})`);
+    console.log(`researcher ${slug}: score ${completed.score} (spread ${completed.spread}, ${completed.publicationsAnalyzed} papers)`);
   }
 }
 

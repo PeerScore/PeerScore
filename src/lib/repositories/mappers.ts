@@ -7,20 +7,18 @@ import type {
   FeaturedResearcher,
   FieldRef,
   FieldSummary,
+  ModelAverage,
   ModelScoreSummary,
+  PublicationAnalysisSummary,
   ResearcherPublication,
   ResearcherStatus,
   ResearcherSummary,
 } from "../types";
 
-/** Shape used by list / summary queries. */
+/** Shape used by list / summary queries (run columns only, no nested analyses). */
 export const researcherSummaryInclude = {
   field: { select: { slug: true, name: true } },
-  runs: {
-    where: { isCurrent: true },
-    take: 1,
-    include: { modelScores: { orderBy: { model: "asc" } } },
-  },
+  runs: { where: { isCurrent: true }, take: 1 },
   _count: { select: { runs: { where: { status: "RUNNING" } } } },
 } satisfies Prisma.ResearcherInclude;
 
@@ -29,6 +27,22 @@ export type ResearcherSummaryRow = Prisma.ResearcherGetPayload<{
 }>;
 
 type RunRow = ResearcherSummaryRow["runs"][number];
+
+/** Completed per-publication analyses of a run, with their model scores. */
+export const runAnalysesInclude = {
+  publicationAnalyses: {
+    where: { status: "COMPLETED" },
+    include: { modelScores: { orderBy: { model: "asc" } } },
+  },
+} satisfies Prisma.AnalysisRunInclude;
+
+export type RunWithAnalysesRow = Prisma.AnalysisRunGetPayload<{ include: typeof runAnalysesInclude }>;
+
+export type ModelScoreRow = RunWithAnalysesRow["publicationAnalyses"][number]["modelScores"][number];
+
+export type PublicationAnalysisRow = Prisma.PublicationAnalysisGetPayload<{
+  include: { modelScores: true };
+}>;
 
 export function toWeights(json: Prisma.JsonValue | null | undefined): CriterionWeights {
   const out: CriterionWeights = { ...DEFAULT_WEIGHTS };
@@ -53,13 +67,17 @@ export function toSections(json: Prisma.JsonValue | null | undefined): AnalysisS
   return sections;
 }
 
+export function toStringList(json: Prisma.JsonValue | null | undefined): string[] {
+  return Array.isArray(json) ? json.filter((v): v is string => typeof v === "string") : [];
+}
+
 function toRationale(json: Prisma.JsonValue | null | undefined): Record<string, unknown> {
   return json && typeof json === "object" && !Array.isArray(json)
     ? (json as Record<string, unknown>)
     : {};
 }
 
-export function toModelScore(row: RunRow["modelScores"][number]): ModelScoreSummary {
+export function toModelScore(row: ModelScoreRow): ModelScoreSummary {
   return {
     model: row.model,
     rigor: row.rigor,
@@ -72,13 +90,56 @@ export function toModelScore(row: RunRow["modelScores"][number]): ModelScoreSumm
   };
 }
 
-export function toRunSummary(run: RunRow): AnalysisRunSummary {
+/** Per-model criterion averages over a set of publication analyses (A→Z by model). */
+export function modelAverages(analyses: readonly { modelScores: readonly ModelScoreRow[] }[]): ModelAverage[] {
+  const acc = new Map<string, { n: number; sums: Record<string, number> }>();
+  for (const a of analyses) {
+    for (const m of a.modelScores) {
+      const entry = acc.get(m.model) ?? { n: 0, sums: Object.fromEntries([...CRITERIA, "weighted"].map((k) => [k, 0])) };
+      entry.n += 1;
+      for (const c of CRITERIA) entry.sums[c] += m[c];
+      entry.sums.weighted += m.weighted;
+      acc.set(m.model, entry);
+    }
+  }
+  return [...acc.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([model, { n, sums }]) => ({
+      model,
+      publications: n,
+      rigor: Math.round(sums.rigor / n),
+      reproducibility: Math.round(sums.reproducibility / n),
+      novelty: Math.round(sums.novelty / n),
+      impact: Math.round(sums.impact / n),
+      clarity: Math.round(sums.clarity / n),
+      weighted: Math.round(sums.weighted / n),
+    }));
+}
+
+export function toPublicationAnalysis(row: PublicationAnalysisRow): PublicationAnalysisSummary {
+  return {
+    id: row.id,
+    runId: row.runId,
+    status: row.status,
+    score: row.score,
+    band: row.score === null ? null : scoreBand(row.score),
+    spread: row.spread,
+    summary: row.summary,
+    strengths: toStringList(row.strengths),
+    concerns: toStringList(row.concerns),
+    modelScores: [...row.modelScores].sort((a, b) => a.model.localeCompare(b.model)).map(toModelScore),
+    finishedAt: row.finishedAt ? row.finishedAt.toISOString() : null,
+  };
+}
+
+export function toRunSummary(run: RunRow & Partial<Pick<RunWithAnalysesRow, "publicationAnalyses">>): AnalysisRunSummary {
   return {
     id: run.id,
     status: run.status,
     promptKey: run.promptKey,
     promptVersion: run.promptVersion,
     promptSha: run.promptSha,
+    models: run.models,
     startedAt: run.startedAt.toISOString(),
     finishedAt: run.finishedAt ? run.finishedAt.toISOString() : null,
     durationSec: run.durationSec,
@@ -86,15 +147,16 @@ export function toRunSummary(run: RunRow): AnalysisRunSummary {
     band: run.score === null ? null : scoreBand(run.score),
     spread: run.spread,
     fieldMedian: run.fieldMedian,
+    publicationsAnalyzed: run.publicationsAnalyzed,
     summary: run.summary,
     disagreement: run.disagreement,
     sections: toSections(run.sections),
-    modelScores: run.modelScores.map(toModelScore),
+    modelAverages: modelAverages(run.publicationAnalyses ?? []),
   };
 }
 
 /** The current run counts as "live" only when it completed with a score. */
-export function liveRun(row: { runs: RunRow[] }): RunRow | null {
+export function liveRun<R extends RunRow>(row: { runs: R[] }): R | null {
   const run = row.runs[0];
   return run && run.status === "COMPLETED" ? run : null;
 }
@@ -136,6 +198,7 @@ export function toResearcherSummary(row: ResearcherSummaryRow): ResearcherSummar
     score: run?.score ?? null,
     band: run && run.score !== null ? scoreBand(run.score) : null,
     spread: run?.spread ?? null,
+    publicationsAnalyzed: run ? run.publicationsAnalyzed : null,
     publicationCount: row.publicationCount,
     openCodeCount: row.openCodeCount,
     topics: row.topics,
@@ -148,21 +211,25 @@ export function toFeatured(row: ResearcherSummaryRow): FeaturedResearcher {
   return {
     ...toResearcherSummary(row),
     summary: run?.summary ?? null,
-    modelScores: run ? run.modelScores.map(toModelScore) : [],
+    models: run?.models ?? [],
   };
 }
 
-export function toPublication(row: {
-  id: string;
-  title: string;
-  year: number;
-  venue: string | null;
-  doi: string | null;
-  url: string | null;
-  abstract: string | null;
-  hasCode: boolean;
-  score: number | null;
-}): ResearcherPublication {
+export function toPublication(
+  row: {
+    id: string;
+    title: string;
+    year: number;
+    venue: string | null;
+    doi: string | null;
+    url: string | null;
+    abstract: string | null;
+    hasCode: boolean;
+    citationCount: number;
+    openalexId: string | null;
+  },
+  analysis: PublicationAnalysisRow | null = null,
+): ResearcherPublication {
   return {
     id: row.id,
     title: row.title,
@@ -172,6 +239,8 @@ export function toPublication(row: {
     url: row.url,
     abstract: row.abstract,
     hasCode: row.hasCode,
-    score: row.score,
+    citationCount: row.citationCount,
+    openalexId: row.openalexId,
+    analysis: analysis ? toPublicationAnalysis(analysis) : null,
   };
 }

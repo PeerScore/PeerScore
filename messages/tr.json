@@ -55,7 +55,7 @@
     "statFields": "Alan",
     "statQueue": "Kuyrukta",
     "featured": "Öne çıkan analiz",
-    "papersModels": "{papers, plural, one {# makale} other {# makale}} · {models, plural, one {# model} other {# model}}",
+    "papersAnalyzedModels": "{papers, plural, one {# makale} other {# makale}} analiz edildi · {models, plural, one {# model} other {# model}}",
     "readAnalysis": "Analizi oku",
     "noAnalysis": "Henüz hiçbir analiz yayımlanmadı. Kuyruktaki ilk başvuru burada görünecek.",
     "recentlyPublished": "Son yayımlananlar",
@@ -65,10 +65,22 @@
     "allFields": "Tüm alanlar",
     "howItWorks": "PeerScore nasıl çalışır",
     "steps": {
-      "1": { "title": "Bir isim gönderin", "body": "Herkes bir araştırmacı önerebilir. Tek alan, hesap yok — istek herkese açık bir kuyruğa girer." },
-      "2": { "title": "Yayınlar toplanır", "body": "Bir worker araştırmacıyı açık akademik kayıtlarda bulur ve yayın üst verileriyle özetlerini indirir." },
-      "3": { "title": "Alana özel analiz", "body": "Birden fazla dil modeli, alan için yazılmış bir istemle yayınları okur ve beş ölçütü birbirinden bağımsız puanlar." },
-      "4": { "title": "Makale yayına girer", "body": "Puanlar ağırlıklı bir uzlaşıda birleştirilir; tüm görüş ayrılıklarıyla birlikte eksiksiz değerlendirme 24–48 saat içinde yayımlanır." }
+      "1": {
+        "title": "Bir isim gönderin",
+        "body": "Herkes bir araştırmacı önerebilir. Tek alan, hesap yok — istek herkese açık bir kuyruğa girer."
+      },
+      "2": {
+        "title": "Yayınlar toplanır",
+        "body": "Bir worker araştırmacıyı açık akademik kayıtlarda bulur ve yayın üst verileriyle özetlerini indirir."
+      },
+      "3": {
+        "title": "Alana özel analiz",
+        "body": "Birden fazla dil modeli, alan için yazılmış bir istemle yayınları okur ve beş ölçütü birbirinden bağımsız puanlar."
+      },
+      "4": {
+        "title": "Makale yayına girer",
+        "body": "Puanlar ağırlıklı bir uzlaşıda birleştirilir; tüm görüş ayrılıklarıyla birlikte eksiksiz değerlendirme 24–48 saat içinde yayımlanır."
+      }
     },
     "reproducibleTitle": "Her analiz yeniden üretilebilir.",
     "reproducibleBody": "İstemler sürümlenir ve özetlenir (hash), model çıktıları olduğu gibi saklanır ve tüm süreç açık kaynaklıdır. Analizler dil modelleri tarafından üretilir ve hata içerebilir — herhangi bir makale sayfasından bildirebilirsiniz.",
@@ -108,6 +120,7 @@
     "thPubs": "Yayın",
     "thScore": "Puan",
     "thAnalyzed": "Analiz tarihi",
+    "analyzedCount": "{n} analiz edildi",
     "analyzing": "analiz ediliyor",
     "queuedEta": "kuyrukta · 24–48 sa",
     "pagination": "Sayfalama",
@@ -139,7 +152,7 @@
     "from": "Açık araştırmacı dizini PeerScore’dan",
     "notice": "Bu makale, yayın üst verileri ve özetlerinden yola çıkılarak dil modelleri tarafından yazılmıştır. Hata içerebilir ve bir hakem değerlendirmesi değildir. Puanlar modellerin okumasını yansıtır, herhangi bir kurumun görüşünü değil.",
     "disagreeTitle": "Modellerin ayrıştığı yerler",
-    "spreadPoints": "En yüksek ile en düşük model arasında <n>{spread}</n> puan fark.",
+    "spreadPoints": "En yüksek ve en düşük puanlı yayın arasında <n>{spread}</n> puanlık yayılım.",
     "categories": "Kategoriler",
     "published": "Yayımlandı",
     "inQueue": "Kuyrukta",
@@ -153,13 +166,15 @@
     "infoTopics": "Konular",
     "infoLastRun": "Son çalıştırma",
     "ringLabel": "/ 100",
-    "infoStats": "fark {spread} · alan medyanı {median} · {models, plural, one {# model} other {# model}}",
+    "infoAggregate": "{n, plural, one {# makale} other {# makale}} üzerinden atıf ağırlıklı ortalama · yayılım {spread} · alan medyanı {median}",
+    "infoModels": "yayın başına {models, plural, one {# model} other {# model}}",
     "analyzing": "analiz",
     "queued": "kuyrukta",
     "scoreWithin": "puan 24–48 saat içinde hazır",
     "breakdownHint": "Ağırlıklar alana göre belirlenir · her satırda en düşük model vurgulanır",
+    "breakdownNote": "{n, plural, one {# makale} other {# makale}} üzerinden ortalama",
     "thCriterion": "Ölçüt",
-    "thConsensus": "Uzlaşı",
+    "thAverage": "Ortalama",
     "criteria": {
       "rigor": "Titizlik",
       "reproducibility": "Yeniden üretilebilirlik",
@@ -174,9 +189,18 @@
     "thYear": "Yıl",
     "thTitle": "Başlık",
     "thVenue": "Mecra",
+    "thCitations": "Atıflar",
     "thCode": "Kod",
     "thScore": "Puan",
     "publicCode": "Açık kod",
+    "sortedByCitations": "atıflara göre sıralı",
+    "paperSummary": "Özet",
+    "paperStrengths": "Güçlü yönler",
+    "paperConcerns": "Çekinceler",
+    "paperPerModel": "Modele göre",
+    "paperSpread": "modeller arası yayılım {spread}",
+    "notAnalyzed": "analiz edilmedi",
+    "showAnalysis": "Analizi göster",
     "provPrompt": "İstem",
     "provSha": "sha {sha}",
     "provModels": "Modeller",
@@ -208,10 +232,26 @@
     "intro": "Tek alan, hesap yok. İstek herkese açık bir kuyruğa girer ve analiz tamamlandığında makale otomatik olarak yayımlanır.",
     "whatHappensNext": "Sonra ne olur",
     "steps": {
-      "1": { "when": "dakikalar", "title": "Kuyruğa alındı", "body": "İsteğiniz herkese açık bir kimlik ve kuyruk sırasıyla kaydedilir. Hakkınızda başka hiçbir şey toplanmaz." },
-      "2": { "when": "saatler", "title": "Yayınlar toplandı", "body": "Bir worker ismi açık akademik kayıtlarda bulur; üst verileri, özetleri ve kod bağlantılarını indirir." },
-      "3": { "when": "saatler", "title": "Alana özel analiz", "body": "Birden fazla dil modeli, alan için yazılmış bir istemle yayınları okur ve beş ölçütü birbirinden bağımsız puanlar." },
-      "4": { "when": "24–48 sa", "title": "Makale yayımlandı", "body": "Puanlar birleştirilir, değerlendirme ve tüm görüş ayrılıkları yayımlanır, sayfa otomatik olarak yayına girer." }
+      "1": {
+        "when": "dakikalar",
+        "title": "Kuyruğa alındı",
+        "body": "İsteğiniz herkese açık bir kimlik ve kuyruk sırasıyla kaydedilir. Hakkınızda başka hiçbir şey toplanmaz."
+      },
+      "2": {
+        "when": "saatler",
+        "title": "Yayınlar toplandı",
+        "body": "Bir worker ismi açık akademik kayıtlarda bulur; üst verileri, özetleri ve kod bağlantılarını indirir."
+      },
+      "3": {
+        "when": "saatler",
+        "title": "Alana özel analiz",
+        "body": "Birden fazla dil modeli, alan için yazılmış bir istemle yayınları okur ve beş ölçütü birbirinden bağımsız puanlar."
+      },
+      "4": {
+        "when": "24–48 sa",
+        "title": "Makale yayımlandı",
+        "body": "Puanlar birleştirilir, değerlendirme ve tüm görüş ayrılıkları yayımlanır, sayfa otomatik olarak yayına girer."
+      }
     },
     "whoCanBeSubmitted": "Kimler önerilebilir",
     "eligible": {

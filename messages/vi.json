@@ -55,7 +55,7 @@
     "statFields": "Lĩnh vực",
     "statQueue": "Trong hàng đợi",
     "featured": "Phân tích nổi bật",
-    "papersModels": "{papers, plural, other {# bài báo}} · {models, plural, other {# mô hình}}",
+    "papersAnalyzedModels": "đã phân tích {papers, plural, other {# bài báo}} · {models, plural, other {# mô hình}}",
     "readAnalysis": "Đọc phân tích",
     "noAnalysis": "Chưa có phân tích nào được công bố. Yêu cầu đầu tiên trong hàng đợi sẽ xuất hiện ở đây.",
     "recentlyPublished": "Mới công bố",
@@ -65,10 +65,22 @@
     "allFields": "Tất cả lĩnh vực",
     "howItWorks": "PeerScore hoạt động như thế nào",
     "steps": {
-      "1": { "title": "Gửi một cái tên", "body": "Ai cũng có thể đề xuất một nhà nghiên cứu. Một ô nhập, không cần tài khoản — yêu cầu được đưa vào hàng đợi công khai." },
-      "2": { "title": "Thu thập công bố", "body": "Một worker xác định nhà nghiên cứu trong các cơ sở dữ liệu học thuật mở và tải về siêu dữ liệu cùng tóm tắt các công bố." },
-      "3": { "title": "Phân tích theo lĩnh vực", "body": "Nhiều mô hình ngôn ngữ đọc các công bố với prompt viết riêng cho lĩnh vực và chấm điểm độc lập năm tiêu chí." },
-      "4": { "title": "Bài viết được đăng", "body": "Điểm số được tổng hợp thành đồng thuận có trọng số và bản phân tích đầy đủ, kèm mọi bất đồng, được công bố trong 24–48 giờ." }
+      "1": {
+        "title": "Gửi một cái tên",
+        "body": "Ai cũng có thể đề xuất một nhà nghiên cứu. Một ô nhập, không cần tài khoản — yêu cầu được đưa vào hàng đợi công khai."
+      },
+      "2": {
+        "title": "Thu thập công bố",
+        "body": "Một worker xác định nhà nghiên cứu trong các cơ sở dữ liệu học thuật mở và tải về siêu dữ liệu cùng tóm tắt các công bố."
+      },
+      "3": {
+        "title": "Phân tích theo lĩnh vực",
+        "body": "Nhiều mô hình ngôn ngữ đọc các công bố với prompt viết riêng cho lĩnh vực và chấm điểm độc lập năm tiêu chí."
+      },
+      "4": {
+        "title": "Bài viết được đăng",
+        "body": "Điểm số được tổng hợp thành đồng thuận có trọng số và bản phân tích đầy đủ, kèm mọi bất đồng, được công bố trong 24–48 giờ."
+      }
     },
     "reproducibleTitle": "Mọi phân tích đều có thể tái lập.",
     "reproducibleBody": "Prompt được quản lý phiên bản và băm (hash), đầu ra của mô hình được lưu nguyên văn, và toàn bộ quy trình là mã nguồn mở. Các phân tích do mô hình ngôn ngữ tạo ra và có thể có sai sót — hãy báo lỗi từ bất kỳ trang bài viết nào.",
@@ -108,6 +120,7 @@
     "thPubs": "Công bố",
     "thScore": "Điểm",
     "thAnalyzed": "Ngày phân tích",
+    "analyzedCount": "đã phân tích {n}",
     "analyzing": "đang phân tích",
     "queuedEta": "trong hàng đợi · 24–48 giờ",
     "pagination": "Phân trang",
@@ -139,7 +152,7 @@
     "from": "Từ PeerScore, chỉ mục mở về các nhà nghiên cứu",
     "notice": "Bài viết này do các mô hình ngôn ngữ viết dựa trên siêu dữ liệu và tóm tắt công bố. Nó có thể có sai sót và không phải là bình duyệt. Điểm số phản ánh cách đọc của mô hình, không phải quan điểm của bất kỳ tổ chức nào.",
     "disagreeTitle": "Nơi các mô hình bất đồng",
-    "spreadPoints": "Chênh lệch <n>{spread}</n> điểm giữa mô hình cao nhất và thấp nhất.",
+    "spreadPoints": "Chênh lệch <n>{spread}</n> điểm giữa công bố được chấm cao nhất và thấp nhất.",
     "categories": "Danh mục",
     "published": "Đã công bố",
     "inQueue": "Trong hàng đợi",
@@ -153,13 +166,15 @@
     "infoTopics": "Chủ đề",
     "infoLastRun": "Lần chạy gần nhất",
     "ringLabel": "/ 100",
-    "infoStats": "chênh lệch {spread} · trung vị lĩnh vực {median} · {models, plural, other {# mô hình}}",
+    "infoAggregate": "trung bình có trọng số trích dẫn của {n, plural, other {# bài báo}} · độ chênh {spread} · trung vị lĩnh vực {median}",
+    "infoModels": "{models, plural, other {# mô hình}} cho mỗi công bố",
     "analyzing": "đang phân tích",
     "queued": "đang chờ",
     "scoreWithin": "điểm có trong 24–48 giờ",
     "breakdownHint": "Trọng số được đặt theo lĩnh vực · mô hình thấp nhất mỗi hàng được tô nổi",
+    "breakdownNote": "trung bình trên {n, plural, other {# bài báo}}",
     "thCriterion": "Tiêu chí",
-    "thConsensus": "Đồng thuận",
+    "thAverage": "Trung bình",
     "criteria": {
       "rigor": "Chặt chẽ",
       "reproducibility": "Khả năng tái lập",
@@ -174,9 +189,18 @@
     "thYear": "Năm",
     "thTitle": "Tiêu đề",
     "thVenue": "Nơi đăng",
+    "thCitations": "Trích dẫn",
     "thCode": "Mã nguồn",
     "thScore": "Điểm",
     "publicCode": "Mã nguồn công khai",
+    "sortedByCitations": "sắp xếp theo trích dẫn",
+    "paperSummary": "Tóm tắt",
+    "paperStrengths": "Điểm mạnh",
+    "paperConcerns": "Điểm cần lưu ý",
+    "paperPerModel": "Theo mô hình",
+    "paperSpread": "độ chênh giữa các mô hình {spread}",
+    "notAnalyzed": "chưa phân tích",
+    "showAnalysis": "Hiện phân tích",
     "provPrompt": "Prompt",
     "provSha": "sha {sha}",
     "provModels": "Mô hình",
@@ -208,10 +232,26 @@
     "intro": "Một ô nhập, không cần tài khoản. Yêu cầu được đưa vào hàng đợi công khai và bài viết được đăng tự động khi phân tích hoàn tất.",
     "whatHappensNext": "Điều gì xảy ra tiếp theo",
     "steps": {
-      "1": { "when": "vài phút", "title": "Đã vào hàng đợi", "body": "Yêu cầu của bạn được lưu với một mã công khai và vị trí trong hàng đợi. Không thu thập gì khác về bạn." },
-      "2": { "when": "vài giờ", "title": "Đã thu thập công bố", "body": "Một worker xác định tên trong các cơ sở dữ liệu học thuật mở và tải về siêu dữ liệu, tóm tắt và liên kết mã nguồn." },
-      "3": { "when": "vài giờ", "title": "Phân tích theo lĩnh vực", "body": "Nhiều mô hình ngôn ngữ đọc các công bố với prompt viết riêng cho lĩnh vực và chấm điểm độc lập năm tiêu chí." },
-      "4": { "when": "24–48 giờ", "title": "Bài viết đã đăng", "body": "Điểm số được tổng hợp, bản phân tích và mọi bất đồng được công bố, và trang tự động lên sóng." }
+      "1": {
+        "when": "vài phút",
+        "title": "Đã vào hàng đợi",
+        "body": "Yêu cầu của bạn được lưu với một mã công khai và vị trí trong hàng đợi. Không thu thập gì khác về bạn."
+      },
+      "2": {
+        "when": "vài giờ",
+        "title": "Đã thu thập công bố",
+        "body": "Một worker xác định tên trong các cơ sở dữ liệu học thuật mở và tải về siêu dữ liệu, tóm tắt và liên kết mã nguồn."
+      },
+      "3": {
+        "when": "vài giờ",
+        "title": "Phân tích theo lĩnh vực",
+        "body": "Nhiều mô hình ngôn ngữ đọc các công bố với prompt viết riêng cho lĩnh vực và chấm điểm độc lập năm tiêu chí."
+      },
+      "4": {
+        "when": "24–48 giờ",
+        "title": "Bài viết đã đăng",
+        "body": "Điểm số được tổng hợp, bản phân tích và mọi bất đồng được công bố, và trang tự động lên sóng."
+      }
     },
     "whoCanBeSubmitted": "Ai có thể được đề xuất",
     "eligible": {

@@ -76,54 +76,87 @@ model Researcher {
 }
 
 model Publication {
-  id           String     @id @default(cuid())
-  researcherId String
-  researcher   Researcher @relation(fields: [researcherId], references: [id], onDelete: Cascade)
-  title        String
-  year         Int
-  venue        String?
-  doi          String?
-  url          String?
-  abstract     String?
-  hasCode      Boolean    @default(false)
-  score        Int?
+  id            String                @id @default(cuid())
+  researcherId  String
+  researcher    Researcher            @relation(fields: [researcherId], references: [id], onDelete: Cascade)
+  title         String
+  year          Int
+  venue         String?
+  doi           String?
+  url           String?
+  abstract      String?
+  hasCode       Boolean               @default(false)
+  /// OpenAlex `cited_by_count` at fetch time (weights the researcher aggregate)
+  citationCount Int                   @default(0)
+  openalexId    String?
+  analyses      PublicationAnalysis[]
 
   @@index([researcherId, year])
 }
 
+/// Researcher-level batch: one run reads every publication with every model,
+/// then synthesises the researcher-level text from the per-paper analyses.
 model AnalysisRun {
-  id            String       @id @default(cuid())
-  researcherId  String
-  researcher    Researcher   @relation(fields: [researcherId], references: [id], onDelete: Cascade)
-  status        RunStatus    @default(RUNNING)
-  promptKey     String
-  promptVersion String
-  promptSha     String
-  startedAt     DateTime     @default(now())
-  finishedAt    DateTime?
-  durationSec   Int?
-  /// Weighted consensus 0–100 (mean of model weighted scores, rounded)
-  score         Int?
-  /// max − min of model weighted scores
-  spread        Int?
-  fieldMedian   Int?
-  /// Markdown
-  summary       String?
-  /// Markdown
-  disagreement  String?
+  id                   String                @id @default(cuid())
+  researcherId         String
+  researcher           Researcher            @relation(fields: [researcherId], references: [id], onDelete: Cascade)
+  status               RunStatus             @default(RUNNING)
+  promptKey            String
+  promptVersion        String
+  promptSha            String
+  /// Provider ids that took part in the run (e.g. ["anthropic", "openai"])
+  models               String[]              @default([])
+  startedAt            DateTime              @default(now())
+  finishedAt           DateTime?
+  durationSec          Int?
+  /// Aggregate 0–100: citation-weighted mean of the current publication scores
+  score                Int?
+  /// max − min of the current publication scores
+  spread               Int?
+  fieldMedian          Int?
+  publicationsAnalyzed Int                   @default(0)
+  /// Markdown synthesis (2 paragraphs) generated from the per-publication analyses
+  summary              String?
+  /// Markdown: the publication / criterion where the models disagree most
+  disagreement         String?
   /// Array of { title: string, body: string }
-  sections      Json         @default("[]")
-  isCurrent     Boolean      @default(false)
-  modelScores   ModelScore[]
+  sections             Json                  @default("[]")
+  isCurrent            Boolean               @default(false)
+  publicationAnalyses  PublicationAnalysis[]
 
   @@index([researcherId, isCurrent])
   @@index([isCurrent, finishedAt])
 }
 
+/// One publication read by every model within a run.
+model PublicationAnalysis {
+  id            String       @id @default(cuid())
+  publicationId String
+  publication   Publication  @relation(fields: [publicationId], references: [id], onDelete: Cascade)
+  runId         String
+  run           AnalysisRun  @relation(fields: [runId], references: [id], onDelete: Cascade)
+  status        RunStatus    @default(RUNNING)
+  /// Consensus 0–100: rounded mean of the model weighted scores
+  score         Int?
+  /// max − min of the model weighted scores
+  spread        Int?
+  /// Markdown, one short paragraph about this paper
+  summary       String?
+  strengths     Json         @default("[]")
+  concerns      Json         @default("[]")
+  isCurrent     Boolean      @default(false)
+  createdAt     DateTime     @default(now())
+  finishedAt    DateTime?
+  modelScores   ModelScore[]
+
+  @@unique([runId, publicationId])
+  @@index([publicationId, isCurrent])
+}
+
 model ModelScore {
-  id              String      @id @default(cuid())
-  runId           String
-  run             AnalysisRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  id              String              @id @default(cuid())
+  analysisId      String
+  analysis        PublicationAnalysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
   model           String
   rigor           Int
   reproducibility Int
@@ -132,7 +165,7 @@ model ModelScore {
   clarity         Int
   weighted        Int
   /// Free-form per-criterion rationale, e.g. { rigor: "...", ... }
-  rationale       Json        @default("{}")
+  rationale       Json                @default("{}")
 
-  @@unique([runId, model])
+  @@unique([analysisId, model])
 }

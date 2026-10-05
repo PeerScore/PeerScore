@@ -15,6 +15,7 @@ import type {
 import {
   liveRun,
   researcherSummaryInclude,
+  runAnalysesInclude,
   toFieldSummary,
   toPublication,
   toResearcherSummary,
@@ -162,7 +163,17 @@ export async function getResearcherBySlug(slug: string): Promise<ResearcherArtic
     include: {
       ...researcherSummaryInclude,
       field: true,
-      publications: { orderBy: [{ year: "desc" }, { title: "asc" }] },
+      runs: { where: { isCurrent: true }, take: 1, include: runAnalysesInclude },
+      publications: {
+        orderBy: [{ citationCount: "desc" }, { year: "desc" }, { title: "asc" }],
+        include: {
+          analyses: {
+            where: { isCurrent: true, status: "COMPLETED" },
+            orderBy: { createdAt: "desc" },
+            include: { modelScores: { orderBy: { model: "asc" } } },
+          },
+        },
+      },
     },
   });
   if (!row) return null;
@@ -172,7 +183,8 @@ export async function getResearcherBySlug(slug: string): Promise<ResearcherArtic
     prisma.researcher.count({ where: { fieldId: row.fieldId, runs: { some: LIVE_RUN } } }),
   ]);
 
-  const run = liveRun(row) ?? row.runs[0] ?? null;
+  const live = liveRun(row);
+  const run = live ?? row.runs[0] ?? null;
   return {
     id: row.id,
     slug: row.slug,
@@ -191,7 +203,10 @@ export async function getResearcherBySlug(slug: string): Promise<ResearcherArtic
     status: deriveStatus(row),
     field: toFieldSummary(row.field, { researcherCount, publishedCount }),
     run: run ? toRunSummary(run) : null,
-    publications: row.publications.map(toPublication),
+    // Only analyses of the live run are shown; a publication keeps at most one current analysis.
+    publications: row.publications.map((p) =>
+      toPublication(p, live ? (p.analyses.find((a) => a.runId === live.id) ?? null) : null),
+    ),
   };
 }
 
@@ -242,23 +257,24 @@ export async function randomPublished(): Promise<ResearcherSummary | null> {
 
 /** Counters for the home page "stats" strip. */
 export async function stats(): Promise<SiteStats> {
-  const [researchers, published, fields, publications, queued, scores, models] = await Promise.all([
+  const [researchers, published, fields, publications, queued, runs] = await Promise.all([
     prisma.researcher.count(),
     prisma.analysisRun.count({ where: LIVE_RUN }),
     prisma.field.count(),
     prisma.publication.count(),
     prisma.submission.count({ where: { status: { notIn: ["PUBLISHED", "FAILED"] } } }),
-    prisma.analysisRun.findMany({ where: { ...LIVE_RUN, score: { not: null } }, select: { score: true } }),
-    prisma.modelScore.findMany({ where: { run: LIVE_RUN }, distinct: ["model"], select: { model: true } }),
+    prisma.analysisRun.findMany({ where: LIVE_RUN, select: { score: true, publicationsAnalyzed: true, models: true } }),
   ]);
+  const scores = runs.map((r) => r.score).filter((s): s is number => s !== null);
   return {
     researchers,
     published,
     fields,
     publications,
+    publicationsAnalyzed: runs.reduce((acc, r) => acc + r.publicationsAnalyzed, 0),
     queued,
-    medianScore: median(scores.map((s) => s.score as number)),
-    models: models.length,
+    medianScore: median(scores),
+    models: new Set(runs.flatMap((r) => r.models)).size,
   };
 }
 
@@ -317,31 +333,65 @@ export async function upsertResearcher(input: UpsertResearcherInput): Promise<{ 
   return row;
 }
 
-export type PublicationInput = Omit<ResearcherPublication, "id"> & { id?: string };
+export type PublicationInput = Omit<ResearcherPublication, "id" | "analysis" | "citationCount" | "openalexId"> & {
+  id?: string;
+  citationCount?: number;
+  openalexId?: string | null;
+};
+
+/** Publications of a researcher as stored (ids included), in the order given to `replacePublications`. */
+export interface StoredPublication {
+  id: string;
+  title: string;
+  year: number;
+  citationCount: number;
+  hasCode: boolean;
+}
+
+function publicationKey(p: { openalexId?: string | null; doi?: string | null; title: string; year: number }): string {
+  if (p.openalexId) return `oa:${p.openalexId.toLowerCase()}`;
+  if (p.doi) return `doi:${p.doi.toLowerCase()}`;
+  return `t:${p.title.trim().toLowerCase()}|${p.year}`;
+}
 
 /**
  * Replace the publication list of a researcher and refresh the
- * publicationCount / openCodeCount counters, in one transaction.
+ * publicationCount / openCodeCount counters, in one transaction. Existing rows
+ * are matched by OpenAlex id, DOI or (title, year) and updated in place so
+ * that their ids — and the analyses attached to them — survive re-analysis;
+ * rows that are no longer listed are deleted.
  */
-export async function replacePublications(researcherId: string, publications: PublicationInput[]): Promise<void> {
-  await prisma.$transaction(async (tx) => {
-    await tx.publication.deleteMany({ where: { researcherId } });
-    if (publications.length > 0) {
-      await tx.publication.createMany({
-        data: publications.map((p) => ({
-          id: p.id,
-          researcherId,
-          title: p.title,
-          year: p.year,
-          venue: p.venue ?? null,
-          doi: p.doi ?? null,
-          url: p.url ?? null,
-          abstract: p.abstract ?? null,
-          hasCode: p.hasCode ?? false,
-          score: p.score ?? null,
-        })),
-      });
+export async function replacePublications(researcherId: string, publications: PublicationInput[]): Promise<StoredPublication[]> {
+  return prisma.$transaction(async (tx) => {
+    const existing = await tx.publication.findMany({
+      where: { researcherId },
+      select: { id: true, openalexId: true, doi: true, title: true, year: true },
+    });
+    const byKey = new Map(existing.map((p) => [publicationKey(p), p.id]));
+    const keep = new Set<string>();
+    const stored: StoredPublication[] = [];
+    for (const p of publications) {
+      const data = {
+        researcherId,
+        title: p.title,
+        year: p.year,
+        venue: p.venue ?? null,
+        doi: p.doi ?? null,
+        url: p.url ?? null,
+        abstract: p.abstract ?? null,
+        hasCode: p.hasCode ?? false,
+        citationCount: Math.max(0, Math.round(p.citationCount ?? 0)),
+        openalexId: p.openalexId ?? null,
+      };
+      const matchedId = p.id ?? byKey.get(publicationKey(p));
+      const id =
+        matchedId && !keep.has(matchedId)
+          ? (await tx.publication.update({ where: { id: matchedId }, data, select: { id: true } })).id
+          : (await tx.publication.create({ data, select: { id: true } })).id;
+      keep.add(id);
+      stored.push({ id, title: data.title, year: data.year, citationCount: data.citationCount, hasCode: data.hasCode });
     }
+    await tx.publication.deleteMany({ where: { researcherId, id: { notIn: [...keep] } } });
     await tx.researcher.update({
       where: { id: researcherId },
       data: {
@@ -349,5 +399,6 @@ export async function replacePublications(researcherId: string, publications: Pu
         openCodeCount: publications.filter((p) => p.hasCode).length,
       },
     });
+    return stored;
   });
 }

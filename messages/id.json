@@ -55,7 +55,7 @@
     "statFields": "Bidang",
     "statQueue": "Dalam antrean",
     "featured": "Analisis pilihan",
-    "papersModels": "{papers, plural, other {# makalah}} · {models, plural, other {# model}}",
+    "papersAnalyzedModels": "{papers, plural, other {# makalah}} dianalisis · {models, plural, other {# model}}",
     "readAnalysis": "Baca analisis",
     "noAnalysis": "Belum ada analisis yang diterbitkan. Pengajuan pertama dalam antrean akan muncul di sini.",
     "recentlyPublished": "Baru diterbitkan",
@@ -65,10 +65,22 @@
     "allFields": "Semua bidang",
     "howItWorks": "Cara kerja PeerScore",
     "steps": {
-      "1": { "title": "Ajukan sebuah nama", "body": "Siapa pun dapat mengajukan peneliti. Satu kolom, tanpa akun — permintaan masuk ke antrean publik." },
-      "2": { "title": "Publikasi dikumpulkan", "body": "Sebuah worker mengidentifikasi peneliti di catatan akademik terbuka dan mengunduh metadata serta abstrak publikasinya." },
-      "3": { "title": "Analisis khusus bidang", "body": "Beberapa model bahasa membaca publikasi dengan prompt yang ditulis untuk bidang tersebut dan menilai lima kriteria secara independen." },
-      "4": { "title": "Artikel tayang", "body": "Skor digabung menjadi konsensus berbobot dan laporan lengkap, beserta setiap perbedaan pendapat, diterbitkan dalam 24–48 jam." }
+      "1": {
+        "title": "Ajukan sebuah nama",
+        "body": "Siapa pun dapat mengajukan peneliti. Satu kolom, tanpa akun — permintaan masuk ke antrean publik."
+      },
+      "2": {
+        "title": "Publikasi dikumpulkan",
+        "body": "Sebuah worker mengidentifikasi peneliti di catatan akademik terbuka dan mengunduh metadata serta abstrak publikasinya."
+      },
+      "3": {
+        "title": "Analisis khusus bidang",
+        "body": "Beberapa model bahasa membaca publikasi dengan prompt yang ditulis untuk bidang tersebut dan menilai lima kriteria secara independen."
+      },
+      "4": {
+        "title": "Artikel tayang",
+        "body": "Skor digabung menjadi konsensus berbobot dan laporan lengkap, beserta setiap perbedaan pendapat, diterbitkan dalam 24–48 jam."
+      }
     },
     "reproducibleTitle": "Setiap analisis dapat direproduksi.",
     "reproducibleBody": "Prompt diberi versi dan hash, keluaran model disimpan apa adanya, dan seluruh alur kerja bersifat sumber terbuka. Analisis dihasilkan oleh model bahasa dan dapat mengandung kesalahan — laporkan dari halaman artikel mana pun.",
@@ -108,6 +120,7 @@
     "thPubs": "Publ.",
     "thScore": "Skor",
     "thAnalyzed": "Dianalisis",
+    "analyzedCount": "{n} dianalisis",
     "analyzing": "sedang dianalisis",
     "queuedEta": "dalam antrean · 24–48 jam",
     "pagination": "Navigasi halaman",
@@ -139,7 +152,7 @@
     "from": "Dari PeerScore, indeks peneliti terbuka",
     "notice": "Artikel ini ditulis oleh model bahasa dari metadata dan abstrak publikasi. Artikel ini dapat mengandung kesalahan dan bukan tinjauan sejawat. Skor mencerminkan pembacaan model, bukan pendapat institusi mana pun.",
     "disagreeTitle": "Di mana model berbeda pendapat",
-    "spreadPoints": "Selisih <n>{spread}</n> poin antara model tertinggi dan terendah.",
+    "spreadPoints": "Sebaran <n>{spread}</n> poin antara publikasi dengan skor tertinggi dan terendah.",
     "categories": "Kategori",
     "published": "Diterbitkan",
     "inQueue": "Dalam antrean",
@@ -153,13 +166,15 @@
     "infoTopics": "Topik",
     "infoLastRun": "Eksekusi terakhir",
     "ringLabel": "/ 100",
-    "infoStats": "selisih {spread} · median bidang {median} · {models, plural, other {# model}}",
+    "infoAggregate": "rata-rata tertimbang sitasi dari {n, plural, other {# makalah}} · sebaran {spread} · median bidang {median}",
+    "infoModels": "{models, plural, other {# model}} per publikasi",
     "analyzing": "dianalisis",
     "queued": "antre",
     "scoreWithin": "skor tersedia dalam 24–48 jam",
     "breakdownHint": "Bobot ditetapkan per bidang · model terendah di setiap baris disorot",
+    "breakdownNote": "dirata-ratakan dari {n, plural, other {# makalah}}",
     "thCriterion": "Kriteria",
-    "thConsensus": "Konsensus",
+    "thAverage": "Rata-rata",
     "criteria": {
       "rigor": "Ketelitian",
       "reproducibility": "Reproduksibilitas",
@@ -174,9 +189,18 @@
     "thYear": "Tahun",
     "thTitle": "Judul",
     "thVenue": "Tempat terbit",
+    "thCitations": "Sitasi",
     "thCode": "Kode",
     "thScore": "Skor",
     "publicCode": "Kode publik",
+    "sortedByCitations": "diurutkan menurut sitasi",
+    "paperSummary": "Ringkasan",
+    "paperStrengths": "Kekuatan",
+    "paperConcerns": "Kekhawatiran",
+    "paperPerModel": "Per model",
+    "paperSpread": "sebaran antarmodel {spread}",
+    "notAnalyzed": "belum dianalisis",
+    "showAnalysis": "Tampilkan analisis",
     "provPrompt": "Prompt",
     "provSha": "sha {sha}",
     "provModels": "Model",
@@ -208,10 +232,26 @@
     "intro": "Satu kolom, tanpa akun. Permintaan masuk ke antrean publik dan artikel diterbitkan otomatis setelah analisis selesai.",
     "whatHappensNext": "Apa yang terjadi selanjutnya",
     "steps": {
-      "1": { "when": "menit", "title": "Dalam antrean", "body": "Permintaan Anda disimpan dengan id publik dan posisi dalam antrean. Tidak ada data lain tentang Anda yang dikumpulkan." },
-      "2": { "when": "jam", "title": "Publikasi dikumpulkan", "body": "Sebuah worker mengidentifikasi nama di catatan akademik terbuka dan mengunduh metadata, abstrak, dan tautan kode." },
-      "3": { "when": "jam", "title": "Analisis khusus bidang", "body": "Beberapa model bahasa membaca publikasi dengan prompt yang ditulis untuk bidang tersebut dan menilai lima kriteria secara independen." },
-      "4": { "when": "24–48 jam", "title": "Artikel diterbitkan", "body": "Skor digabung, laporan dan setiap perbedaan pendapat diterbitkan, dan halaman tayang otomatis." }
+      "1": {
+        "when": "menit",
+        "title": "Dalam antrean",
+        "body": "Permintaan Anda disimpan dengan id publik dan posisi dalam antrean. Tidak ada data lain tentang Anda yang dikumpulkan."
+      },
+      "2": {
+        "when": "jam",
+        "title": "Publikasi dikumpulkan",
+        "body": "Sebuah worker mengidentifikasi nama di catatan akademik terbuka dan mengunduh metadata, abstrak, dan tautan kode."
+      },
+      "3": {
+        "when": "jam",
+        "title": "Analisis khusus bidang",
+        "body": "Beberapa model bahasa membaca publikasi dengan prompt yang ditulis untuk bidang tersebut dan menilai lima kriteria secara independen."
+      },
+      "4": {
+        "when": "24–48 jam",
+        "title": "Artikel diterbitkan",
+        "body": "Skor digabung, laporan dan setiap perbedaan pendapat diterbitkan, dan halaman tayang otomatis."
+      }
     },
     "whoCanBeSubmitted": "Siapa yang dapat diajukan",
     "eligible": {
