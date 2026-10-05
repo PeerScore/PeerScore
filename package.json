@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "tsx --test \"src/**/*.test.ts\" \"worker/**/*.test.ts\"",
+    "test": "npm run i18n:check && tsx --test \"src/**/*.test.ts\" \"worker/**/*.test.ts\"",
     "worker": "tsx worker/index.ts",
     "worker:once": "WORKER_ONCE=1 tsx worker/index.ts",
     "worker:smoke": "tsx worker/scripts/smoke.ts",
@@ -15,13 +15,15 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:seed": "tsx prisma/seed.ts",
-    "db:reset": "prisma migrate reset --force"
+    "db:reset": "prisma migrate reset --force",
+    "i18n:check": "tsx scripts/i18n-check.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.131.0",
     "@prisma/adapter-pg": "^6.19.3",
     "@prisma/client": "^6.19.3",
     "next": "16.3.8",
+    "next-intl": "^4.14.9",
     "openai": "^7.28.0",
     "pg": "^8.23.1",
     "react": "19.2.8",

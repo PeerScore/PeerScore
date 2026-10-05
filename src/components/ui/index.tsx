@@ -1,5 +1,6 @@
 // UI primitives shared across pages (see docs/SPEC.md "Components to build").
-import Link from "next/link";
+import { Link } from "@/i18n/navigation";
+import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 import type { ScoreBand } from "@/lib/types";
 import { scoreBand } from "@/lib/scoring";
@@ -88,12 +89,13 @@ export function ScoreBar({
   width?: string;
 }) {
   const band = scoreBand(score);
+  const t = useTranslations("common");
   return (
     <span
       className={cx("block h-1.5 overflow-hidden rounded-full bg-hairline", className)}
       style={width ? { width } : undefined}
       role="img"
-      aria-label={`Score ${score} out of 100`}
+      aria-label={t("scoreOutOf", { score })}
     >
       <span className={cx("block h-full rounded-full", BAND_FILL[band])} style={{ width: `${Math.max(0, Math.min(100, score))}%` }} />
     </span>
@@ -123,6 +125,7 @@ export function ScoreRing({
   label?: string;
 }) {
   const band = scoreBand(score);
+  const t = useTranslations("common");
   const sw = strokeWidth ?? Math.max(4, Math.round(size / 12));
   const r = (size - sw) / 2;
   const c = 2 * Math.PI * r;
@@ -130,7 +133,7 @@ export function ScoreRing({
   const fontSize = Math.round(size * 0.3);
   return (
     <div className={cx("relative inline-flex shrink-0 items-center justify-center", className)} style={{ width: size, height: size }}>
-      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={`PeerScore ${score} out of 100`}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} role="img" aria-label={t("peerScoreOutOf", { score })}>
         <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke={track ?? "var(--c-hairline)"} strokeWidth={sw} />
         <circle
           cx={size / 2}
@@ -280,10 +283,12 @@ export interface RailItem {
   href: string;
   active?: boolean;
   sub?: boolean;
+  /** Plain <a> (e.g. API routes, which live outside the locale prefix). */
+  external?: boolean;
 }
 
 export function ContentsRail({
-  title = "Contents",
+  title: titleProp,
   items,
   tools,
   className,
@@ -293,6 +298,8 @@ export function ContentsRail({
   tools?: RailItem[];
   className?: string;
 }) {
+  const t = useTranslations("common");
+  const title = titleProp ?? t("contents");
   return (
     <nav className={cx("text-[13.5px]", className)} aria-label={title}>
       <div className="mb-2 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{title}</div>
@@ -304,7 +311,7 @@ export function ContentsRail({
               aria-current={it.active ? "location" : undefined}
               className={cx(
                 "block rounded-[10px] px-3 py-1.5 leading-snug",
-                it.sub && "pl-6 text-[13px]",
+                it.sub && "ps-6 text-[13px]",
                 it.active ? "border border-border bg-surface font-medium text-ink shadow-card" : "text-text hover:bg-surface hover:text-ink",
               )}
             >
@@ -315,13 +322,19 @@ export function ContentsRail({
       </ol>
       {tools && tools.length > 0 && (
         <>
-          <div className="mb-2 mt-6 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">Tools</div>
+          <div className="mb-2 mt-6 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{t("tools")}</div>
           <ul className="flex flex-col gap-0.5">
             {tools.map((it) => (
               <li key={it.href + it.label}>
-                <Link href={it.href} className="block rounded-[10px] px-3 py-1.5 leading-snug text-text hover:bg-surface hover:text-ink">
-                  {it.label}
-                </Link>
+                {it.external ? (
+                  <a href={it.href} className="block rounded-[10px] px-3 py-1.5 leading-snug text-text hover:bg-surface hover:text-ink">
+                    {it.label}
+                  </a>
+                ) : (
+                  <Link href={it.href} className="block rounded-[10px] px-3 py-1.5 leading-snug text-text hover:bg-surface hover:text-ink">
+                    {it.label}
+                  </Link>
+                )}
               </li>
             ))}
           </ul>
@@ -350,10 +363,10 @@ export function Th({ children, className, align = "left" }: { children?: ReactNo
     <th
       scope="col"
       className={cx(
-        "whitespace-nowrap border-b border-border px-3 py-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.06em] text-muted first:pl-5 last:pr-5 sm:first:pl-6 sm:last:pr-6",
-        align === "right" && "text-right",
+        "whitespace-nowrap border-b border-border px-3 py-2.5 font-mono text-[11px] font-medium uppercase tracking-[0.06em] text-muted first:ps-5 last:pe-5 sm:first:ps-6 sm:last:pe-6",
+        align === "right" && "text-end",
         align === "center" && "text-center",
-        align === "left" && "text-left",
+        align === "left" && "text-start",
         className,
       )}
     >
@@ -370,9 +383,9 @@ export function Td({ children, className, align = "left", mono }: { children?: R
   return (
     <td
       className={cx(
-        "px-3 py-3 align-middle first:pl-5 last:pr-5 sm:first:pl-6 sm:last:pr-6",
+        "px-3 py-3 align-middle first:ps-5 last:pe-5 sm:first:ps-6 sm:last:pe-6",
         mono && "font-mono text-[13px] tabular",
-        align === "right" && "text-right",
+        align === "right" && "text-end",
         align === "center" && "text-center",
         className,
       )}

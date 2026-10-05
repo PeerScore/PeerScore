@@ -1,6 +1,7 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { useTranslations } from "next-intl";
 
 const STORAGE_KEY = "peerscore-theme";
 
@@ -42,13 +43,14 @@ function setTheme(next: Theme) {
 
 export function ThemeToggle() {
   const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const t = useTranslations("common");
   const isDark = theme === "dark";
   return (
     <button
       type="button"
       onClick={() => setTheme(isDark ? "light" : "dark")}
-      aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-      title={isDark ? "Light mode" : "Dark mode"}
+      aria-label={isDark ? t("switchToLight") : t("switchToDark")}
+      title={isDark ? t("lightMode") : t("darkMode")}
       className="inline-flex h-11 w-11 items-center justify-center rounded-full text-muted transition-colors hover:bg-page hover:text-ink"
     >
       {isDark ? (

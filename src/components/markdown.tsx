@@ -20,7 +20,7 @@ export function Markdown({ text, className }: { text: string | null | undefined;
         const lines = block.split("\n");
         if (lines.every((l) => /^[-*]\s+/.test(l))) {
           return (
-            <ul key={i} className="list-disc space-y-1 pl-5">
+            <ul key={i} className="list-disc space-y-1 ps-5">
               {lines.map((l, j) => (
                 <li key={j}>{inline(l.replace(/^[-*]\s+/, ""))}</li>
               ))}

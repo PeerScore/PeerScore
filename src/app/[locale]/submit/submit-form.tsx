@@ -1,12 +1,16 @@
 "use client";
 
-import Link from "next/link";
 import { useActionState, useId, useState } from "react";
+import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { submitResearcher, type SubmitState } from "./actions";
 import { BTN_DARK, BTN_OUTLINE, cx } from "@/components/ui";
 import { CheckIcon } from "@/components/ui/icons";
 
 const initial: SubmitState = { kind: "idle" };
+// Mirrors NAME_MIN_LENGTH / NAME_MAX_LENGTH in src/lib/repositories/submissions.ts.
+const NAME_MIN = 2;
+const NAME_MAX = 120;
 
 /** Remounting the inner form (new key) resets the action state. */
 export function SubmitForm() {
@@ -17,23 +21,36 @@ export function SubmitForm() {
 function SubmitFormInner({ onReset }: { onReset: () => void }) {
   const [state, action, pending] = useActionState(submitResearcher, initial);
   const inputId = useId();
+  const t = useTranslations("submit");
 
   if (state.kind === "queued") {
     return (
       <Confirmation
         onReset={onReset}
-        title={`Analysis queued for ${state.name}`}
+        title={t("queuedTitle", { name: state.name })}
         tiles={[
-          { label: "Request", value: `#${state.id.slice(0, 7)}` },
-          { label: "Position", value: `${state.position} in queue` },
-          { label: "Status", value: <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-mid" aria-hidden="true" />Queued</span> },
-          { label: "Follow", value: <Link href="/queue" className="text-link hover:underline">Public queue →</Link> },
+          { label: t("tileRequest"), value: `#${state.id.slice(0, 7)}` },
+          { label: t("tilePosition"), value: t("positionValue", { position: state.position }) },
+          {
+            label: t("tileStatus"),
+            value: (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-mid" aria-hidden="true" />
+                {t("statusQueued")}
+              </span>
+            ),
+          },
+          {
+            label: t("tileFollow"),
+            value: (
+              <Link href="/queue" className="text-link hover:underline">
+                {t("publicQueueLink")}
+              </Link>
+            ),
+          },
         ]}
       >
-        <p className="text-[15px] text-text">
-          Publications will be collected from open scholarly sources and analyzed by several language models with the prompt
-          written for the field. The article is usually published <span className="font-medium text-ink">within 24–48 hours</span>.
-        </p>
+        <p className="text-[15px] text-text">{t.rich("queuedBody", { b: (chunks) => <span className="font-medium text-ink">{chunks}</span> })}</p>
       </Confirmation>
     );
   }
@@ -42,39 +59,60 @@ function SubmitFormInner({ onReset }: { onReset: () => void }) {
     return (
       <Confirmation
         onReset={onReset}
-        title={`${state.name} is already in the index`}
+        title={t("existsTitle", { name: state.name })}
         tiles={[
-          { label: "Status", value: <span className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-high" aria-hidden="true" />Indexed</span> },
-          { label: "Article", value: <Link href={`/researchers/${state.slug}`} className="text-link hover:underline">Open the page →</Link> },
+          {
+            label: t("tileStatus"),
+            value: (
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-high" aria-hidden="true" />
+                {t("statusIndexed")}
+              </span>
+            ),
+          },
+          {
+            label: t("tileArticle"),
+            value: (
+              <Link href={`/researchers/${state.slug}`} className="text-link hover:underline">
+                {t("openPage")}
+              </Link>
+            ),
+          },
         ]}
-        primary={{ href: `/researchers/${state.slug}`, label: "Open the article" }}
+        primary={{ href: `/researchers/${state.slug}`, label: t("openArticle") }}
       >
-        <p className="text-[15px] text-text">
-          A researcher with this name already has a page. Open it to read the analysis, or request a re-analysis from the
-          article page if it looks out of date.
-        </p>
+        <p className="text-[15px] text-text">{t("existsBody")}</p>
       </Confirmation>
     );
   }
 
-  const error = state.kind === "error" ? state.message : null;
+  const error =
+    state.kind === "error"
+      ? state.code === "tooShort"
+        ? t("errorTooShort", { min: NAME_MIN })
+        : state.code === "tooLong"
+          ? t("errorTooLong", { max: NAME_MAX })
+          : state.code === "server"
+            ? t("errorServer")
+            : t("errorInvalid")
+      : null;
 
   return (
     <form action={action} className="flex flex-col gap-4">
       <div>
         <label htmlFor={inputId} className="block text-[14px] font-semibold text-ink">
-          Researcher name
+          {t("nameLabel")}
         </label>
         <input
           id={inputId}
           name="name"
           type="text"
           required
-          minLength={2}
-          maxLength={120}
+          minLength={NAME_MIN}
+          maxLength={NAME_MAX}
           autoComplete="off"
           defaultValue={state.kind === "error" ? state.name : ""}
-          placeholder="e.g. Leïla Haddad"
+          placeholder={t("namePlaceholder")}
           aria-invalid={error ? true : undefined}
           aria-describedby={`${inputId}-help`}
           className={cx(
@@ -83,14 +121,14 @@ function SubmitFormInner({ onReset }: { onReset: () => void }) {
           )}
         />
         <p id={`${inputId}-help`} className={cx("mt-2 text-[13px]", error ? "text-low" : "text-muted")}>
-          {error ?? "Full name as it appears on publications. We resolve it in open scholarly records; add an initial or an institution if the name is common."}
+          {error ?? t("nameHelp")}
         </p>
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <button type="submit" disabled={pending} className={BTN_DARK}>
-          {pending ? "Queuing…" : "Start the analysis"}
+          {pending ? t("queuing") : t("start")}
         </button>
-        <span className="text-[13px] text-muted">Public queue · no account</span>
+        <span className="text-[13px] text-muted">{t("publicQueueNoAccount")}</span>
       </div>
     </form>
   );
@@ -109,6 +147,8 @@ function Confirmation({
   children: React.ReactNode;
   primary?: { href: string; label: string };
 }) {
+  const t = useTranslations("submit");
+  const c = useTranslations("common");
   return (
     <div className="flex flex-col gap-5" role="status">
       <div className="flex items-start gap-4">
@@ -121,10 +161,10 @@ function Confirmation({
         </div>
       </div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-        {tiles.map((t) => (
-          <div key={t.label} className="rounded-[12px] border border-border bg-page px-4 py-3">
-            <div className="font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{t.label}</div>
-            <div className="mt-1 font-mono text-[14px] font-medium text-ink">{t.value}</div>
+        {tiles.map((tile) => (
+          <div key={tile.label} className="rounded-[12px] border border-border bg-page px-4 py-3">
+            <div className="font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{tile.label}</div>
+            <div className="mt-1 font-mono text-[14px] font-medium text-ink">{tile.value}</div>
           </div>
         ))}
       </div>
@@ -135,10 +175,10 @@ function Confirmation({
           </Link>
         ) : null}
         <button type="button" onClick={onReset} className={primary ? BTN_OUTLINE : BTN_DARK}>
-          Submit another name
+          {t("submitAnother")}
         </button>
         <Link href="/researchers" className={BTN_OUTLINE}>
-          Browse the index
+          {c("browseIndex")}
         </Link>
       </div>
     </div>

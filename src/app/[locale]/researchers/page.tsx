@@ -1,9 +1,10 @@
-import Link from "next/link";
 import type { Metadata } from "next";
+import { getFormatter, getLocale, getTranslations } from "next-intl/server";
+import NextLink from "next/link";
+import { Link, getPathname } from "@/i18n/navigation";
 import { parseResearcherListParams } from "@/lib/query";
 import { availableLetters, listFields, listResearchers } from "@/lib/repositories";
 import type { ResearcherListParams, ResearcherSort } from "@/lib/types";
-import { formatDate, formatNumber } from "@/lib/format";
 import { buildQuery } from "@/lib/url";
 import { AutoSubmitForm } from "@/components/auto-submit-form";
 import { Card, Chip, ScoreBar, SegmentedTabs, Table, Td, Th, Tr, cx } from "@/components/ui";
@@ -11,7 +12,10 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@/components/ui/icons";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "Index of researchers" };
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("researchers");
+  return { title: t("metaTitle") };
+}
 
 const PAGE_SIZE = 50;
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
@@ -33,7 +37,17 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
   };
   const sort: ResearcherSort = params.sort ?? "score";
 
-  const [result, fields, letters] = await Promise.all([listResearchers(params), listFields(), availableLetters()]);
+  const [result, fields, letters, t, c, fmt, locale] = await Promise.all([
+    listResearchers(params),
+    listFields(),
+    availableLetters(),
+    getTranslations("researchers"),
+    getTranslations("common"),
+    getFormatter(),
+    getLocale(),
+  ]);
+  const formatNumber = (v: number) => fmt.number(v);
+  const formatDate = (iso: string | null) => (iso ? fmt.dateTime(new Date(iso), "date") : "—");
   const { items, total, page, pageSize, pageCount } = result;
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(total, page * pageSize);
@@ -57,13 +71,13 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
       <div className="flex flex-col gap-8 lg:flex-row lg:gap-10">
         {/* Filter rail */}
         <aside className="w-full shrink-0 lg:w-[220px]">
-          <AutoSubmitForm action="/researchers" className="flex flex-col gap-7">
+          <AutoSubmitForm action={getPathname({ href: "/researchers", locale })} className="flex flex-col gap-7">
             {params.q && <input type="hidden" name="q" value={params.q} />}
             {params.sort && <input type="hidden" name="sort" value={params.sort} />}
             {params.letter && <input type="hidden" name="letter" value={params.letter} />}
 
             <fieldset>
-              <legend className="mb-2 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">Field</legend>
+              <legend className="mb-2 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{t("field")}</legend>
               <ul className="flex flex-col gap-0.5 text-[13.5px]">
                 <li>
                   <Link
@@ -73,7 +87,7 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
                       !params.field ? "border border-border bg-surface font-medium text-ink shadow-card" : "text-text hover:bg-surface",
                     )}
                   >
-                    All fields
+                    {t("allFields")}
                     <span className="font-mono text-[11.5px] text-muted">{formatNumber(fields.reduce((a, f) => a + f.researcherCount, 0))}</span>
                   </Link>
                 </li>
@@ -100,30 +114,30 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
             </fieldset>
 
             <fieldset>
-              <legend className="mb-2 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">Status</legend>
+              <legend className="mb-2 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{t("status")}</legend>
               <div className="flex flex-col gap-1 text-[13.5px] text-text">
                 <label className="flex min-h-9 cursor-pointer items-center gap-2.5 px-1">
                   <input type="checkbox" name="status" value="published" defaultChecked={published} className="h-4 w-4 accent-[var(--c-link)]" />
-                  Published
+                  {t("published")}
                 </label>
                 <label className="flex min-h-9 cursor-pointer items-center gap-2.5 px-1">
                   <input type="checkbox" name="status" value="pending" defaultChecked={pending} className="h-4 w-4 accent-[var(--c-link)]" />
-                  In queue
+                  {t("inQueue")}
                 </label>
                 <label className="flex min-h-9 items-center gap-2.5 px-1 text-muted">
                   <input type="checkbox" disabled className="h-4 w-4" />
-                  Disputed
-                  <span className="font-mono text-[10.5px] uppercase">soon</span>
+                  {t("disputed")}
+                  <span className="font-mono text-[10.5px] uppercase">{t("soon")}</span>
                 </label>
               </div>
             </fieldset>
 
             <fieldset>
-              <legend className="mb-2 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">Minimum score</legend>
+              <legend className="mb-2 font-mono text-[10.5px] font-medium uppercase tracking-[0.08em] text-muted">{t("minimumScore")}</legend>
               <label className="block px-1 text-[13.5px] text-text">
                 <span className="flex items-center justify-between">
-                  <span>At least</span>
-                  <output className="font-mono text-[12px] text-muted">{params.minScore ?? "any"}</output>
+                  <span>{t("atLeast")}</span>
+                  <output className="font-mono text-[12px] text-muted">{params.minScore ?? t("any")}</output>
                 </span>
                 <input
                   type="range"
@@ -133,13 +147,13 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
                   step={5}
                   defaultValue={params.minScore ?? 0}
                   className="mt-2 h-11 w-full accent-[var(--c-link)]"
-                  aria-label="Minimum score"
+                  aria-label={t("minimumScore")}
                 />
               </label>
             </fieldset>
 
             <button type="submit" className="inline-flex h-11 items-center justify-center rounded-button border border-border bg-surface px-4 text-[14px] font-medium text-ink hover:bg-page">
-              Apply filters
+              {t("applyFilters")}
             </button>
           </AutoSubmitForm>
         </aside>
@@ -148,43 +162,39 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <SegmentedTabs
-              ariaLabel="Index views"
+              ariaLabel={c("indexViews")}
               items={[
-                { label: "Index", href: "/researchers", active: sort !== "recent" },
-                { label: "Recent changes", href: "/researchers?sort=recent", active: sort === "recent" },
-                { label: "Queue", href: "/queue" },
-                { label: "Statistics", href: "/#stats" },
+                { label: c("tabIndex"), href: "/researchers", active: sort !== "recent" },
+                { label: c("tabRecent"), href: "/researchers?sort=recent", active: sort === "recent" },
+                { label: c("tabQueue"), href: "/queue" },
+                { label: c("tabStats"), href: "/#stats" },
               ]}
             />
             <div className="flex items-center gap-1.5 text-[13px] text-muted">
-              <span>Export</span>
+              <span>{t("export")}</span>
               <a href={`/researchers/export${apiQuery}`} className="font-medium text-link hover:underline">
-                CSV
+                {t("csv")}
               </a>
               <span>·</span>
               <a href={`/api/researchers${apiQuery}`} className="font-medium text-link hover:underline">
-                JSON
+                {t("json")}
               </a>
               <span>·</span>
-              <Link href="/api/researchers" className="font-medium text-link hover:underline">
-                API
-              </Link>
+              {/* API routes live outside the locale prefix: plain next/link, not the i18n Link. */}
+              <NextLink href="/api/researchers" className="font-medium text-link hover:underline">
+                {t("api")}
+              </NextLink>
             </div>
           </div>
 
-          <h1 className="mt-6 font-serif text-[32px] font-medium leading-tight text-ink sm:text-[40px]">Index of researchers</h1>
+          <h1 className="mt-6 font-serif text-[32px] font-medium leading-tight text-ink sm:text-[40px]">{t("title")}</h1>
           <p className="mt-2 max-w-[640px] text-[15px] text-muted">
-            {params.q ? (
-              <>
-                Results for <span className="font-medium text-ink">“{params.q}”</span> ·{" "}
-              </>
-            ) : null}
-            Every researcher in PeerScore, published or waiting in the queue. Scores are weighted consensus values from several
-            language models.
+            {params.q ? t.rich("resultsFor", { q: params.q, em: (chunks) => <span className="font-medium text-ink">{chunks}</span> }) : null}
+            {t("intro")}
           </p>
 
           {/* A–Z */}
-          <nav aria-label="Browse by letter" className="mt-6 overflow-x-auto rounded-full border border-border bg-surface p-1.5 shadow-card">
+          <nav aria-label={t("browseByLetter")} className="mt-6 overflow-x-auto rounded-full border border-border bg-surface p-1.5 shadow-card">
             <ul className="flex min-w-max items-center gap-0.5">
               <li>
                 <Link
@@ -194,7 +204,7 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
                     !params.letter ? "bg-cta text-cta-text" : "text-muted hover:text-ink",
                   )}
                 >
-                  All
+                  {t("all")}
                 </Link>
               </li>
               {LETTERS.map((l) => {
@@ -230,15 +240,20 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
           <Card className="mt-5" padded={false}>
             <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-3 text-[13px] text-muted sm:px-6">
               <span>
-                Showing <span className="font-mono text-ink">{from}–{to}</span> of <span className="font-mono text-ink">{formatNumber(total)}</span>
+                {t.rich("showing", {
+                  from: formatNumber(from),
+                  to: formatNumber(to),
+                  total: formatNumber(total),
+                  n: (chunks) => <span className="font-mono text-ink">{chunks}</span>,
+                })}
               </span>
               <span className="flex flex-wrap items-center gap-1">
-                <span className="mr-1">Sort:</span>
+                <span className="me-1">{t("sort")}</span>
                 {(
                   [
-                    ["name", "Name"],
-                    ["score", "Score"],
-                    ["recent", "Last analysis"],
+                    ["name", t("sortName")],
+                    ["score", t("sortScore")],
+                    ["recent", t("sortRecent")],
                   ] as const
                 ).map(([key, label], i) => (
                   <span key={key} className="flex items-center gap-1">
@@ -257,9 +272,9 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
 
             {items.length === 0 ? (
               <p className="px-5 py-12 text-center text-[14px] text-muted sm:px-6">
-                No researcher matches these filters.{" "}
+                {t("noMatch")}{" "}
                 <Link href="/submit" className="font-medium text-link hover:underline">
-                  Submit one
+                  {t("submitOne")}
                 </Link>
                 .
               </p>
@@ -268,11 +283,11 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
                 <Table minWidth={720}>
                   <thead>
                     <tr>
-                      <Th>Researcher</Th>
-                      <Th>Field</Th>
-                      <Th align="right">Pubs.</Th>
-                      <Th>Score</Th>
-                      <Th align="right">Analyzed</Th>
+                      <Th>{t("thResearcher")}</Th>
+                      <Th>{t("thField")}</Th>
+                      <Th align="right">{t("thPubs")}</Th>
+                      <Th>{t("thScore")}</Th>
+                      <Th align="right">{t("thAnalyzed")}</Th>
                     </tr>
                   </thead>
                   <tbody>
@@ -301,7 +316,7 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
                             ) : (
                               <span className="inline-flex items-center gap-2 text-[12.5px] text-muted">
                                 <span className="h-2 w-2 rounded-full bg-mid" aria-hidden="true" />
-                                {r.status === "analyzing" ? "analyzing" : "in queue · 24–48 h"}
+                                {r.status === "analyzing" ? t("analyzing") : t("queuedEta")}
                               </span>
                             )}
                           </Td>
@@ -318,9 +333,9 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
 
             {/* Pagination */}
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border px-5 py-3 text-[13px] sm:px-6">
-              <nav className="flex flex-wrap items-center gap-1" aria-label="Pagination">
+              <nav className="flex flex-wrap items-center gap-1" aria-label={t("pagination")}>
                 <PageLink href={buildQuery(base, { page: page - 1 })} disabled={page <= 1}>
-                  <ChevronLeftIcon /> Previous
+                  <ChevronLeftIcon className="rtl:-scale-x-100" /> {t("previous")}
                 </PageLink>
                 {pageNumbers(page, pageCount).map((p, i) =>
                   p === "…" ? (
@@ -342,10 +357,10 @@ export default async function ResearchersPage({ searchParams }: { searchParams: 
                   ),
                 )}
                 <PageLink href={buildQuery(base, { page: page + 1 })} disabled={page >= pageCount}>
-                  Next <ChevronRightIcon />
+                  {t("next")} <ChevronRightIcon className="rtl:-scale-x-100" />
                 </PageLink>
               </nav>
-              <span className="font-mono text-[12px] text-muted">{pageSize} per page</span>
+              <span className="font-mono text-[12px] text-muted">{t("perPage", { count: pageSize })}</span>
             </div>
           </Card>
         </div>
