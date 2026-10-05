@@ -1,26 +1,172 @@
 @import "tailwindcss";
 
+/* Dark mode is class-based: `<html class="dark">` (see ThemeToggle + the
+   inline script in layout.tsx). */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Design tokens (docs/SPEC.md). Light values live on :root, dark values on
+   .dark; the @theme block maps them to Tailwind utilities so `bg-surface`,
+   `text-muted`, `border-hairline`… switch automatically with the theme. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --c-page: #f6f6f4;
+  --c-surface: #ffffff;
+  --c-border: #e6e6e2;
+  --c-hairline: #f0f0ec;
+  --c-ink: #16181d;
+  --c-text: #1f2937;
+  --c-muted: #6b7280;
+  --c-link: #3b5bdb;
+  --c-accent: #2dd4a8;
+
+  --c-high: #0e8a6d;
+  --c-high-bg: #e6f4ef;
+  --c-mid: #c77a14;
+  --c-mid-bg: #fbf1df;
+  --c-low: #c43d3d;
+  --c-low-bg: #fbe7e7;
+
+  --c-chip: #eef2ff;
+  --c-chip-text: #3730a3;
+
+  --c-cta: #16181d;
+  --c-cta-text: #ffffff;
+  --c-infobox: #16181d;
+  --c-ring-track: #2a2e36;
+
+  --sh-card: 0 1px 2px rgba(16, 24, 40, 0.04);
+  color-scheme: light;
+}
+
+.dark {
+  --c-page: #0f1115;
+  --c-surface: #171a20;
+  --c-border: #262a33;
+  --c-hairline: #22262e;
+  --c-ink: #f4f5f7;
+  --c-text: #c4c8d0;
+  --c-muted: #8b919c;
+  --c-link: #8fa6ff;
+
+  --c-high: #2dd4a8;
+  --c-high-bg: #10302a;
+  --c-mid: #f5b04c;
+  --c-mid-bg: #332512;
+  --c-low: #f08080;
+  --c-low-bg: #3a1a1a;
+
+  --c-chip: #252a45;
+  --c-chip-text: #c7d2fe;
+
+  --c-cta: #f4f5f7;
+  --c-cta-text: #0f1115;
+  --c-infobox: #0b0d11;
+  --c-ring-track: #262a33;
+
+  --sh-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  color-scheme: dark;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-*: initial;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-page: var(--c-page);
+  --color-surface: var(--c-surface);
+  --color-border: var(--c-border);
+  --color-hairline: var(--c-hairline);
+  --color-ink: var(--c-ink);
+  --color-text: var(--c-text);
+  --color-muted: var(--c-muted);
+  --color-link: var(--c-link);
+  --color-accent: var(--c-accent);
+
+  --color-high: var(--c-high);
+  --color-high-bg: var(--c-high-bg);
+  --color-mid: var(--c-mid);
+  --color-mid-bg: var(--c-mid-bg);
+  --color-low: var(--c-low);
+  --color-low-bg: var(--c-low-bg);
+
+  --color-chip: var(--c-chip);
+  --color-chip-text: var(--c-chip-text);
+
+  --color-cta: var(--c-cta);
+  --color-cta-text: var(--c-cta-text);
+  --color-infobox: var(--c-infobox);
+  --color-ring-track: var(--c-ring-track);
+
+  --font-serif: var(--font-source-serif), "Source Serif 4", Georgia, serif;
+  --font-sans: var(--font-instrument-sans), "Instrument Sans", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-card: 16px;
+  --radius-input: 10px;
+  --radius-button: 12px;
+  --radius-chip: 999px;
+
+  --container-site: 1232px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    background: var(--c-page);
+  }
+  body {
+    background: var(--c-page);
+    color: var(--c-text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-serif);
+    color: var(--c-ink);
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  a {
+    color: inherit;
+  }
+  kbd {
+    font-family: var(--font-mono);
+  }
+  ::selection {
+    background: color-mix(in srgb, var(--c-link) 25%, transparent);
+  }
+  :focus-visible {
+    outline: 2px solid var(--c-link);
+    outline-offset: 2px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@layer utilities {
+  .site-container {
+    width: 100%;
+    max-width: var(--container-site);
+    margin-inline: auto;
+    padding-inline: 24px;
+  }
+  @media (max-width: 480px) {
+    .site-container {
+      padding-inline: 16px;
+    }
+  }
+  .shadow-card {
+    box-shadow: var(--sh-card);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  /* Keep tables readable on phones without breaking the card. */
+  .table-scroll {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 }

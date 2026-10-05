@@ -1,0 +1,666 @@
+{
+  "meta": {
+    "count": 6,
+    "page": 1,
+    "per_page": 50
+  },
+  "results": [
+    {
+      "id": "https://openalex.org/W1",
+      "title": "CellVar: calibrated somatic variant calling from single-cell RNA-seq",
+      "display_name": "CellVar: calibrated somatic variant calling from single-cell RNA-seq",
+      "publication_year": 2023,
+      "doi": "https://doi.org/10.1101/gr.000001",
+      "type": "article",
+      "cited_by_count": 310,
+      "primary_location": {
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.1101/gr.000001",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S1",
+          "display_name": "Genome Research",
+          "type": "journal"
+        },
+        "version": "publishedVersion"
+      },
+      "locations": [
+        {
+          "is_oa": true,
+          "landing_page_url": "https://doi.org/10.1101/gr.000001",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S1",
+            "display_name": "Genome Research",
+            "type": "journal"
+          },
+          "version": "publishedVersion"
+        }
+      ],
+      "abstract_inverted_index": {
+        "We": [
+          0
+        ],
+        "present": [
+          1
+        ],
+        "CellVar,": [
+          2
+        ],
+        "a": [
+          3
+        ],
+        "calibrated": [
+          4
+        ],
+        "caller": [
+          5
+        ],
+        "for": [
+          6
+        ],
+        "somatic": [
+          7
+        ],
+        "variants": [
+          8
+        ],
+        "in": [
+          9
+        ],
+        "droplet-based": [
+          10
+        ],
+        "single-cell": [
+          11
+        ],
+        "RNA-seq.": [
+          12
+        ],
+        "Using": [
+          13
+        ],
+        "held-out": [
+          14
+        ],
+        "cohorts": [
+          15
+        ],
+        "and": [
+          16,
+          29
+        ],
+        "matched": [
+          17
+        ],
+        "bulk": [
+          18
+        ],
+        "sequencing": [
+          19
+        ],
+        "we": [
+          20
+        ],
+        "show": [
+          21
+        ],
+        "improved": [
+          22
+        ],
+        "precision": [
+          23
+        ],
+        "at": [
+          24,
+          34
+        ],
+        "equal": [
+          25
+        ],
+        "recall.": [
+          26
+        ],
+        "Source": [
+          27
+        ],
+        "code": [
+          28
+        ],
+        "benchmark": [
+          30
+        ],
+        "data": [
+          31
+        ],
+        "are": [
+          32
+        ],
+        "available": [
+          33
+        ],
+        "https://github.com/example/cellvar.": [
+          35
+        ]
+      },
+      "topics": [
+        {
+          "display_name": "Single-cell RNA sequencing analysis",
+          "subfield": {
+            "display_name": "Molecular Biology"
+          },
+          "field": {
+            "display_name": "Biochemistry, Genetics and Molecular Biology"
+          }
+        }
+      ]
+    },
+    {
+      "id": "https://openalex.org/W2",
+      "title": "A negative-control benchmark for single-cell variant callers",
+      "display_name": "A negative-control benchmark for single-cell variant callers",
+      "publication_year": 2022,
+      "doi": "https://doi.org/10.1038/s41592-022-0001",
+      "type": "article",
+      "cited_by_count": 245,
+      "primary_location": {
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.1038/s41592-022-0001",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S1",
+          "display_name": "Nature Methods",
+          "type": "journal"
+        },
+        "version": "publishedVersion"
+      },
+      "locations": [
+        {
+          "is_oa": true,
+          "landing_page_url": "https://doi.org/10.1038/s41592-022-0001",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S1",
+            "display_name": "Nature Methods",
+            "type": "journal"
+          },
+          "version": "publishedVersion"
+        }
+      ],
+      "abstract_inverted_index": {
+        "Benchmarks": [
+          0
+        ],
+        "of": [
+          1
+        ],
+        "single-cell": [
+          2
+        ],
+        "variant": [
+          3
+        ],
+        "callers": [
+          4
+        ],
+        "rarely": [
+          5
+        ],
+        "include": [
+          6
+        ],
+        "negative": [
+          7
+        ],
+        "controls.": [
+          8
+        ],
+        "We": [
+          9
+        ],
+        "construct": [
+          10
+        ],
+        "a": [
+          11
+        ],
+        "benchmark": [
+          12
+        ],
+        "from": [
+          13
+        ],
+        "clonal": [
+          14
+        ],
+        "cell": [
+          15
+        ],
+        "lines": [
+          16
+        ],
+        "with": [
+          17
+        ],
+        "known": [
+          18
+        ],
+        "genotypes": [
+          19
+        ],
+        "and": [
+          20
+        ],
+        "evaluate": [
+          21
+        ],
+        "eight": [
+          22
+        ],
+        "callers.": [
+          23
+        ],
+        "Code": [
+          24
+        ],
+        "is": [
+          25
+        ],
+        "publicly": [
+          26
+        ],
+        "available.": [
+          27
+        ]
+      },
+      "topics": [
+        {
+          "display_name": "Single-cell RNA sequencing analysis",
+          "subfield": {
+            "display_name": "Molecular Biology"
+          },
+          "field": {
+            "display_name": "Biochemistry, Genetics and Molecular Biology"
+          }
+        }
+      ]
+    },
+    {
+      "id": "https://openalex.org/W3",
+      "title": "Allelic imbalance in clonal hematopoiesis at single-cell resolution",
+      "display_name": "Allelic imbalance in clonal hematopoiesis at single-cell resolution",
+      "publication_year": 2021,
+      "doi": "https://doi.org/10.1016/j.celrep.2021.000001",
+      "type": "article",
+      "cited_by_count": 160,
+      "primary_location": {
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.1016/j.celrep.2021.000001",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S1",
+          "display_name": "Cell Reports",
+          "type": "journal"
+        },
+        "version": "publishedVersion"
+      },
+      "locations": [
+        {
+          "is_oa": true,
+          "landing_page_url": "https://doi.org/10.1016/j.celrep.2021.000001",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S1",
+            "display_name": "Cell Reports",
+            "type": "journal"
+          },
+          "version": "publishedVersion"
+        }
+      ],
+      "abstract_inverted_index": {
+        "We": [
+          0
+        ],
+        "quantify": [
+          1
+        ],
+        "allele-specific": [
+          2
+        ],
+        "expression": [
+          3
+        ],
+        "in": [
+          4,
+          18
+        ],
+        "clonal": [
+          5
+        ],
+        "hematopoiesis": [
+          6
+        ],
+        "using": [
+          7
+        ],
+        "single-cell": [
+          8
+        ],
+        "transcriptomics": [
+          9
+        ],
+        "across": [
+          10
+        ],
+        "three": [
+          11
+        ],
+        "cohorts,": [
+          12
+        ],
+        "replicating": [
+          13
+        ],
+        "effect": [
+          14
+        ],
+        "sizes": [
+          15
+        ],
+        "previously": [
+          16
+        ],
+        "reported": [
+          17
+        ],
+        "bulk": [
+          19
+        ],
+        "data.": [
+          20
+        ]
+      },
+      "topics": [
+        {
+          "display_name": "Single-cell RNA sequencing analysis",
+          "subfield": {
+            "display_name": "Molecular Biology"
+          },
+          "field": {
+            "display_name": "Biochemistry, Genetics and Molecular Biology"
+          }
+        }
+      ]
+    },
+    {
+      "id": "https://openalex.org/W4",
+      "title": "Reproducibility of droplet-based scRNA-seq across sites",
+      "display_name": "Reproducibility of droplet-based scRNA-seq across sites",
+      "publication_year": 2020,
+      "doi": "https://doi.org/10.1186/s13059-020-0001",
+      "type": "article",
+      "cited_by_count": 128,
+      "primary_location": {
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.1186/s13059-020-0001",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S1",
+          "display_name": "Genome Biology",
+          "type": "journal"
+        },
+        "version": "publishedVersion"
+      },
+      "locations": [
+        {
+          "is_oa": true,
+          "landing_page_url": "https://doi.org/10.1186/s13059-020-0001",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S1",
+            "display_name": "Genome Biology",
+            "type": "journal"
+          },
+          "version": "publishedVersion"
+        },
+        {
+          "is_oa": true,
+          "landing_page_url": "https://zenodo.org/record/123456",
+          "pdf_url": null,
+          "source": {
+            "display_name": "Zenodo",
+            "type": "repository"
+          },
+          "version": "submittedVersion"
+        }
+      ],
+      "abstract_inverted_index": {
+        "A": [
+          0
+        ],
+        "multi-site": [
+          1
+        ],
+        "study": [
+          2
+        ],
+        "of": [
+          3
+        ],
+        "droplet-based": [
+          4
+        ],
+        "single-cell": [
+          5
+        ],
+        "RNA": [
+          6
+        ],
+        "sequencing.": [
+          7
+        ],
+        "We": [
+          8
+        ],
+        "release": [
+          9
+        ],
+        "the": [
+          10,
+          21
+        ],
+        "full": [
+          11
+        ],
+        "processing": [
+          12
+        ],
+        "pipeline": [
+          13
+        ],
+        "and": [
+          14
+        ],
+        "raw": [
+          15
+        ],
+        "data": [
+          16
+        ],
+        "under": [
+          17
+        ],
+        "an": [
+          18
+        ],
+        "open": [
+          19
+        ],
+        "license;": [
+          20
+        ],
+        "analysis": [
+          22
+        ],
+        "notebooks": [
+          23
+        ],
+        "are": [
+          24
+        ],
+        "hosted": [
+          25
+        ],
+        "on": [
+          26
+        ],
+        "Zenodo.": [
+          27
+        ]
+      },
+      "topics": [
+        {
+          "display_name": "Single-cell RNA sequencing analysis",
+          "subfield": {
+            "display_name": "Molecular Biology"
+          },
+          "field": {
+            "display_name": "Biochemistry, Genetics and Molecular Biology"
+          }
+        }
+      ]
+    },
+    {
+      "id": "https://openalex.org/W5",
+      "title": "Haplotype phasing with sparse long reads",
+      "display_name": "Haplotype phasing with sparse long reads",
+      "publication_year": 2018,
+      "doi": "https://doi.org/10.1093/bioinformatics/bty0001",
+      "type": "article",
+      "cited_by_count": 90,
+      "primary_location": {
+        "is_oa": true,
+        "landing_page_url": "https://doi.org/10.1093/bioinformatics/bty0001",
+        "pdf_url": null,
+        "source": {
+          "id": "https://openalex.org/S1",
+          "display_name": "Bioinformatics",
+          "type": "journal"
+        },
+        "version": "publishedVersion"
+      },
+      "locations": [
+        {
+          "is_oa": true,
+          "landing_page_url": "https://doi.org/10.1093/bioinformatics/bty0001",
+          "pdf_url": null,
+          "source": {
+            "id": "https://openalex.org/S1",
+            "display_name": "Bioinformatics",
+            "type": "journal"
+          },
+          "version": "publishedVersion"
+        }
+      ],
+      "abstract_inverted_index": {
+        "We": [
+          0
+        ],
+        "describe": [
+          1
+        ],
+        "a": [
+          2
+        ],
+        "phasing": [
+          3
+        ],
+        "algorithm": [
+          4
+        ],
+        "for": [
+          5
+        ],
+        "sparse": [
+          6
+        ],
+        "long-read": [
+          7
+        ],
+        "data": [
+          8
+        ],
+        "and": [
+          9,
+          14
+        ],
+        "evaluate": [
+          10
+        ],
+        "it": [
+          11
+        ],
+        "on": [
+          12
+        ],
+        "simulated": [
+          13
+        ],
+        "real": [
+          15
+        ],
+        "genomes.": [
+          16
+        ]
+      },
+      "topics": [
+        {
+          "display_name": "Single-cell RNA sequencing analysis",
+          "subfield": {
+            "display_name": "Molecular Biology"
+          },
+          "field": {
+            "display_name": "Biochemistry, Genetics and Molecular Biology"
+          }
+        }
+      ]
+    },
+    {
+      "id": "https://openalex.org/W6",
+      "title": "Clonal dynamics of hematopoietic stem cells in ageing",
+      "display_name": "Clonal dynamics of hematopoietic stem cells in ageing",
+      "publication_year": 2024,
+      "doi": null,
+      "type": "article",
+      "cited_by_count": 41,
+      "primary_location": {
+        "is_oa": true,
+        "landing_page_url": "https://openalex.org/W6",
+        "pdf_url": null,
+        "source": null,
+        "version": "publishedVersion"
+      },
+      "locations": [
+        {
+          "is_oa": true,
+          "landing_page_url": "https://openalex.org/W6",
+          "pdf_url": null,
+          "source": null,
+          "version": "publishedVersion"
+        }
+      ],
+      "abstract_inverted_index": null,
+      "topics": [
+        {
+          "display_name": "Single-cell RNA sequencing analysis",
+          "subfield": {
+            "display_name": "Molecular Biology"
+          },
+          "field": {
+            "display_name": "Biochemistry, Genetics and Molecular Biology"
+          }
+        }
+      ]
+    }
+  ]
+}

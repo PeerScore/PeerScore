@@ -36,10 +36,82 @@ from components); `src/lib/db.ts` exports the `prisma` singleton.
 | `npm run db:deploy` | `prisma migrate deploy` — apply pending migrations (CI / Docker / prod) |
 | `npm run db:seed` | Seed fields, 8 fictional researchers with analyses, 2 queued submissions (idempotent) |
 | `npm run db:reset` | Drop, re-migrate and re-seed the database (destructive) |
-| `npm test` | Unit tests for the pure scoring helpers (`node:test`) |
+| `npm test` | Unit tests: scoring helpers + worker (field mapping, OpenAlex mapping, JSON parsing, mock models) |
 
 The Prisma client is generated with `engineType = "client"` and talks to Postgres through
 `@prisma/adapter-pg`, so the app runtime needs no Prisma engine binary.
+
+## Worker
+
+The worker (`worker/`) is a separate long-running process that turns each `QUEUED`
+submission into a published researcher article:
+
+1. **Claim** — `claimNextSubmission()` atomically takes the oldest `QUEUED` submission
+   (status → `RESOLVING`). Several workers can run side by side.
+2. **Resolve** — the name is looked up in [OpenAlex](https://docs.openalex.org)
+   (`/authors?search=`), the best match is chosen by name similarity + works count, and
+   the author's most-cited works are fetched (`MAX_PUBLICATIONS`, default 50) with
+   abstracts rebuilt from the inverted index and a "has code" heuristic. The OpenAlex
+   topic taxonomy is mapped to a PeerScore field (`worker/fields.ts`); unknown areas land
+   in a `general` field that the worker creates on demand.
+3. **Fetch** (status `FETCHING`) — researcher + publications are upserted through the
+   repositories and the submission is linked to the researcher.
+4. **Analyze** (status `ANALYZING`) — the field's reviewer prompt
+   (`prompts/<promptKey>.md`, front-matter `version`, sha recorded on the run) is sent to
+   every enabled LLM provider in parallel. Each model must return strict JSON
+   (`worker/schema.ts`, zod-validated; one automatic repair round on invalid output).
+   At least one model must succeed. Model scores, a per-criterion disagreement note, the
+   median model's summary/sections and optional per-publication scores are stored with
+   `completeRun()`, which computes the consensus score and makes the run current.
+5. **Publish** — status → `PUBLISHED`; the article page is live. Any exception marks the
+   run `FAILED` and the submission `FAILED` with the error message (visible on `/queue`).
+
+```bash
+npm run worker          # poll forever (POLL_INTERVAL_MS, default 10 s), SIGTERM/SIGINT stop gracefully
+npm run worker:once     # process one submission (or none) and exit
+npm run worker:smoke    # one pass in mock + fixture mode against DATABASE_URL, prints slug + score
+```
+
+Logs are JSON lines with a timestamp (`LOG_LEVEL=debug` for more).
+
+### Mock mode
+
+With no API keys configured — or with `LLM_MOCK=1` — the worker uses three deterministic
+mock models (`model-a`, `model-b`, `model-c`): scores and prose are generated from a
+PRNG seeded with the researcher name and the model id, so the same name always produces
+the same article and the three models disagree a little. `OPENALEX_FIXTURE=1` replaces
+the OpenAlex API with `worker/__fixtures__/*.json` (the fixture author takes the submitted
+name). Together they allow the full pipeline to run offline; this is the default in
+`docker compose` (`LLM_MOCK=1`).
+
+### Environment variables
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | — | Postgres connection (required) |
+| `LLM_MOCK` | unset | `1` → mock models only |
+| `LLM_PROVIDERS` | keys present, else mock | Comma list of `anthropic`, `openai`, `mock` |
+| `ANTHROPIC_API_KEY` / `ANTHROPIC_MODEL` | — / `claude-sonnet-4-5` | Anthropic provider |
+| `OPENAI_API_KEY` / `OPENAI_MODEL` / `OPENAI_BASE_URL` | — / `gpt-4o` / — | OpenAI (or compatible) provider |
+| `LLM_TIMEOUT_MS` / `LLM_MAX_OUTPUT_TOKENS` | `180000` / `4096` | Provider limits |
+| `OPENALEX_MAILTO` | — | Your e-mail for the OpenAlex polite pool |
+| `OPENALEX_BASE_URL` | `https://api.openalex.org` | API base |
+| `OPENALEX_FIXTURE` | unset | `1` → fixture data instead of the API |
+| `MAX_PUBLICATIONS` | `50` | Most-cited works fetched per researcher |
+| `HTTP_TIMEOUT_MS` | `15000` | Per-request timeout (3 retries with backoff) |
+| `POLL_INTERVAL_MS` | `10000` | Sleep when the queue is empty |
+| `WORKER_ONCE` | unset | `1` → single pass then exit |
+| `PROMPTS_DIR` | `./prompts` | Prompt files location |
+| `ABSTRACT_MAX_CHARS` | `900` | Abstract truncation in the model input |
+| `LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` |
+
+### Prompts
+
+One Markdown file per field in `prompts/` (`compbio`, `ml`, `physics-cm`, `oncology`,
+`applied-math`, `marine-ecology`, `behavioral-econ`, `astrophysics`, `general`). Each
+starts with front-matter (`version: 1`), explains what rigor, reproducibility, novelty,
+impact and clarity mean in that field, and specifies the JSON output. Editing a prompt
+changes its sha, which is recorded on every `AnalysisRun` for provenance.
 
 ## Docker
 

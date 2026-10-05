@@ -1,0 +1,97 @@
+{
+  "meta": { "count": 3, "page": 1, "per_page": 10 },
+  "results": [
+    {
+      "id": "https://openalex.org/A5000000001",
+      "display_name": "Noor El-Sayed",
+      "display_name_alternatives": ["N. El-Sayed", "Noor El Sayed"],
+      "orcid": "https://orcid.org/0000-0002-1825-0097",
+      "works_count": 64,
+      "cited_by_count": 2410,
+      "last_known_institutions": [
+        { "id": "https://openalex.org/I1", "display_name": "Cairo Institute of Computational Genomics", "country_code": "EG", "type": "education" }
+      ],
+      "affiliations": [
+        { "institution": { "id": "https://openalex.org/I1", "display_name": "Cairo Institute of Computational Genomics", "country_code": "EG" }, "years": [2024, 2023, 2022, 2021] },
+        { "institution": { "id": "https://openalex.org/I2", "display_name": "University of Alexandria", "country_code": "EG" }, "years": [2020, 2019, 2018, 2017] }
+      ],
+      "topics": [
+        {
+          "id": "https://openalex.org/T10001",
+          "display_name": "Single-cell RNA sequencing analysis",
+          "count": 22,
+          "subfield": { "id": "https://openalex.org/subfields/1312", "display_name": "Molecular Biology" },
+          "field": { "id": "https://openalex.org/fields/13", "display_name": "Biochemistry, Genetics and Molecular Biology" },
+          "domain": { "id": "https://openalex.org/domains/1", "display_name": "Life Sciences" }
+        },
+        {
+          "id": "https://openalex.org/T10002",
+          "display_name": "Genomic variant calling",
+          "count": 15,
+          "subfield": { "id": "https://openalex.org/subfields/1311", "display_name": "Genetics" },
+          "field": { "id": "https://openalex.org/fields/13", "display_name": "Biochemistry, Genetics and Molecular Biology" },
+          "domain": { "id": "https://openalex.org/domains/1", "display_name": "Life Sciences" }
+        },
+        {
+          "id": "https://openalex.org/T10003",
+          "display_name": "Benchmarking of bioinformatics pipelines",
+          "count": 9,
+          "subfield": { "id": "https://openalex.org/subfields/1706", "display_name": "Computer Science Applications" },
+          "field": { "id": "https://openalex.org/fields/17", "display_name": "Computer Science" },
+          "domain": { "id": "https://openalex.org/domains/3", "display_name": "Physical Sciences" }
+        },
+        {
+          "id": "https://openalex.org/T10004",
+          "display_name": "Clonal hematopoiesis",
+          "count": 4,
+          "subfield": { "id": "https://openalex.org/subfields/2720", "display_name": "Hematology" },
+          "field": { "id": "https://openalex.org/fields/27", "display_name": "Medicine" },
+          "domain": { "id": "https://openalex.org/domains/4", "display_name": "Health Sciences" }
+        }
+      ],
+      "counts_by_year": [
+        { "year": 2025, "works_count": 4, "cited_by_count": 410 },
+        { "year": 2024, "works_count": 6, "cited_by_count": 380 },
+        { "year": 2023, "works_count": 7, "cited_by_count": 350 },
+        { "year": 2022, "works_count": 5, "cited_by_count": 300 },
+        { "year": 2021, "works_count": 6, "cited_by_count": 260 },
+        { "year": 2020, "works_count": 5, "cited_by_count": 220 },
+        { "year": 2019, "works_count": 4, "cited_by_count": 170 },
+        { "year": 2018, "works_count": 3, "cited_by_count": 120 },
+        { "year": 2017, "works_count": 2, "cited_by_count": 60 },
+        { "year": 2016, "works_count": 1, "cited_by_count": 20 }
+      ],
+      "works_api_url": "https://api.openalex.org/works?filter=author.id:A5000000001"
+    },
+    {
+      "id": "https://openalex.org/A5000000002",
+      "display_name": "Noor Elsayed",
+      "display_name_alternatives": [],
+      "orcid": null,
+      "works_count": 3,
+      "cited_by_count": 12,
+      "last_known_institutions": [],
+      "affiliations": [],
+      "topics": [],
+      "counts_by_year": []
+    },
+    {
+      "id": "https://openalex.org/A5000000003",
+      "display_name": "Ahmed El-Sayed",
+      "display_name_alternatives": ["A. El-Sayed"],
+      "orcid": null,
+      "works_count": 900,
+      "cited_by_count": 30000,
+      "last_known_institutions": [{ "display_name": "Somewhere University", "country_code": "US" }],
+      "affiliations": [],
+      "topics": [
+        {
+          "display_name": "Superconductivity",
+          "subfield": { "display_name": "Condensed Matter Physics" },
+          "field": { "display_name": "Physics and Astronomy" }
+        }
+      ],
+      "counts_by_year": []
+    }
+  ]
+}

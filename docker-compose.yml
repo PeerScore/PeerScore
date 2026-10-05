@@ -16,6 +16,34 @@ services:
         condition: service_healthy
     command: sh -c "npx prisma migrate deploy && npm run db:seed && npm run dev -- -H 0.0.0.0"
 
+  # Asynchronous analysis worker: QUEUED submission → OpenAlex → LLMs → PUBLISHED.
+  # Mock mode by default (no API keys needed); set LLM_MOCK=0 and provide
+  # ANTHROPIC_API_KEY / OPENAI_API_KEY (e.g. via .env) for real models.
+  worker:
+    build: .
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      NODE_ENV: development
+      DATABASE_URL: postgres://peerscore:peerscore@db:5432/peerscore
+      LLM_MOCK: ${LLM_MOCK:-1}
+      LLM_PROVIDERS: ${LLM_PROVIDERS:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      ANTHROPIC_MODEL: ${ANTHROPIC_MODEL:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      OPENALEX_MAILTO: ${OPENALEX_MAILTO:-}
+      OPENALEX_FIXTURE: ${OPENALEX_FIXTURE:-0}
+      MAX_PUBLICATIONS: ${MAX_PUBLICATIONS:-50}
+      POLL_INTERVAL_MS: ${POLL_INTERVAL_MS:-10000}
+    depends_on:
+      db:
+        condition: service_healthy
+    # Wait for the web service's `prisma migrate deploy` by retrying until the schema exists.
+    command: sh -c "until npx prisma migrate status >/dev/null 2>&1; do echo 'worker: waiting for migrations…'; sleep 3; done; npm run worker"
+
   db:
     image: postgres:16-alpine
     environment:
