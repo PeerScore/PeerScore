@@ -42,7 +42,10 @@ services:
       db:
         condition: service_healthy
     # Wait for the web service's `prisma migrate deploy` by retrying until the schema exists.
-    command: sh -c "until npx prisma migrate status >/dev/null 2>&1; do echo 'worker: waiting for migrations…'; sleep 3; done; npm run worker"
+    command:
+      - sh
+      - -c
+      - "until npx prisma migrate status >/dev/null 2>&1; do echo 'worker - waiting for migrations'; sleep 3; done; npm run worker"
 
   db:
     image: postgres:16-alpine
