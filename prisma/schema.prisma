@@ -1,0 +1,138 @@
+// PeerScore domain model — see docs/SPEC.md ("Domain model") for the authoritative names.
+
+generator client {
+  provider   = "prisma-client-js"
+  // Engine-free client: Rust query engine replaced by the in-process query compiler + a driver adapter (@prisma/adapter-pg).
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum SubmissionStatus {
+  QUEUED
+  RESOLVING
+  FETCHING
+  ANALYZING
+  PUBLISHED
+  FAILED
+}
+
+enum RunStatus {
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+model Submission {
+  id           String           @id @default(cuid())
+  name         String
+  status       SubmissionStatus @default(QUEUED)
+  error        String?
+  researcherId String?
+  researcher   Researcher?      @relation(fields: [researcherId], references: [id], onDelete: SetNull)
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+
+  @@index([status, createdAt])
+  @@index([researcherId])
+}
+
+model Field {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  promptKey   String
+  /// {rigor, reproducibility, novelty, impact, clarity} — weights summing to 1
+  weights     Json
+  researchers Researcher[]
+}
+
+model Researcher {
+  id               String        @id @default(cuid())
+  slug             String        @unique
+  name             String
+  affiliation      String?
+  country          String?
+  orcid            String?
+  openalexId       String?
+  fieldId          String
+  field            Field         @relation(fields: [fieldId], references: [id])
+  activeFrom       Int?
+  activeTo         Int?
+  publicationCount Int           @default(0)
+  openCodeCount    Int           @default(0)
+  topics           String[]      @default([])
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  publications     Publication[]
+  runs             AnalysisRun[]
+  submissions      Submission[]
+
+  @@index([fieldId])
+  @@index([name])
+}
+
+model Publication {
+  id           String     @id @default(cuid())
+  researcherId String
+  researcher   Researcher @relation(fields: [researcherId], references: [id], onDelete: Cascade)
+  title        String
+  year         Int
+  venue        String?
+  doi          String?
+  url          String?
+  abstract     String?
+  hasCode      Boolean    @default(false)
+  score        Int?
+
+  @@index([researcherId, year])
+}
+
+model AnalysisRun {
+  id            String       @id @default(cuid())
+  researcherId  String
+  researcher    Researcher   @relation(fields: [researcherId], references: [id], onDelete: Cascade)
+  status        RunStatus    @default(RUNNING)
+  promptKey     String
+  promptVersion String
+  promptSha     String
+  startedAt     DateTime     @default(now())
+  finishedAt    DateTime?
+  durationSec   Int?
+  /// Weighted consensus 0–100 (mean of model weighted scores, rounded)
+  score         Int?
+  /// max − min of model weighted scores
+  spread        Int?
+  fieldMedian   Int?
+  /// Markdown
+  summary       String?
+  /// Markdown
+  disagreement  String?
+  /// Array of { title: string, body: string }
+  sections      Json         @default("[]")
+  isCurrent     Boolean      @default(false)
+  modelScores   ModelScore[]
+
+  @@index([researcherId, isCurrent])
+  @@index([isCurrent, finishedAt])
+}
+
+model ModelScore {
+  id              String      @id @default(cuid())
+  runId           String
+  run             AnalysisRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  model           String
+  rigor           Int
+  reproducibility Int
+  novelty         Int
+  impact          Int
+  clarity         Int
+  weighted        Int
+  /// Free-form per-criterion rationale, e.g. { rigor: "...", ... }
+  rationale       Json        @default("{}")
+
+  @@unique([runId, model])
+}

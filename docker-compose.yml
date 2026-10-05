@@ -14,7 +14,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: npm run dev -- -H 0.0.0.0
+    command: sh -c "npx prisma migrate deploy && npm run db:seed && npm run dev -- -H 0.0.0.0"
 
   db:
     image: postgres:16-alpine

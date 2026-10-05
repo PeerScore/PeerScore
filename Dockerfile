@@ -6,6 +6,11 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 
+# Prisma schema + migrations are needed to generate the client.
+COPY prisma ./prisma
+COPY prisma.config.ts ./
+RUN npx prisma generate
+
 COPY . .
 
 EXPOSE 3000
