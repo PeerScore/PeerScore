@@ -15,8 +15,8 @@ if command -v docker >/dev/null 2>&1; then
     done
   fi
   if docker info >/dev/null 2>&1; then
-    echo "-> docker compose up --build  (http://localhost:3000)"
-    exec docker compose up --build
+    echo "-> docker compose up --build -V  (http://localhost:3000)"
+    exec docker compose up --build --renew-anon-volumes
   fi
   echo "Docker injoignable, bascule sur npm."
 fi

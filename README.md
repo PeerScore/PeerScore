@@ -116,7 +116,7 @@ changes its sha, which is recorded on every `AnalysisRun` for provenance.
 ## Docker
 
 ```bash
-docker compose up --build
+docker compose up --build --renew-anon-volumes
 ```
 
 Starts a Postgres 16 database on `localhost:5432` (`peerscore` / `peerscore`, db `peerscore`),
